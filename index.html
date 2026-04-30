@@ -709,6 +709,8 @@ let sleepLog=JSON.parse(localStorage.getItem("zz")||"{}"); // {date: hours}
 let selectedDate=todayStr();
 let selectedWeek=getCurrentMayWeek();
 let selectedDay=dayNameFromDate(selectedDate);
+// Debug: ensure day is correct
+console.log("Today:", selectedDate, "Day:", selectedDay);
 let audioCtx=null;
 let timerTotal=60,timerRemaining=60,timerRunning=false,timerInterval=null;
 
@@ -738,17 +740,27 @@ function isPoolOpen(){return new Date()>=new Date(POOL_OPEN_DATE);}
 
 function getCurrentMayWeek(){
   const today=new Date();
-  const may1=new Date("2026-05-01");
-  if(today<may1)return 1;
-  const diff=Math.floor((today-may1)/(7*86400000));
+  // Week 1 Monday = April 27
+  const week1Mon=new Date("2026-04-27T00:00:00");
+  const week5Sun=new Date("2026-05-31T23:59:59");
+  if(today<week1Mon)return 1;
+  if(today>week5Sun)return 5;
+  const diff=Math.floor((today-week1Mon)/(7*86400000));
   return Math.min(5,diff+1);
 }
 
 function getMayWeekDates(week){
-  // Week 1 starts May 1, Week 2 starts May 8, etc.
-  const may1=new Date("2026-05-01");
-  const weekStart=new Date(may1);
-  weekStart.setDate(may1.getDate()+(week-1)*7);
+  // Week 1: Apr 27 - May 3 (Mon-Sun containing May 1)
+  // Week 2: May 4-10, Week 3: May 11-17, Week 4: May 18-24, Week 5: May 25-31
+  // Find Monday of the week containing May 1
+  const may1=new Date("2026-05-01T12:00:00");
+  const may1Day=may1.getDay(); // Friday=5
+  const daysToMonday=may1Day===0?6:may1Day-1; // days back to Monday
+  const week1Monday=new Date(may1);
+  week1Monday.setDate(may1.getDate()-daysToMonday); // April 27
+  // Then add (week-1)*7 days for subsequent weeks
+  const weekStart=new Date(week1Monday);
+  weekStart.setDate(week1Monday.getDate()+(week-1)*7);
   const dates=[];
   for(let i=0;i<7;i++){
     const d=new Date(weekStart);
@@ -834,9 +846,9 @@ function updateBPSummary(){
 // ============================================================
 function renderDashboard(){
   const today=getTodayName();
-  // Get today's workout from current May week or fallback
+  // Get today's workout - use current day name to look up plan
   const weekPlan=MAY_PROGRAM[selectedWeek]||MAY_PROGRAM[1];
-  const w=weekPlan[today];
+  const w=weekPlan[today]||weekPlan["Sunday"];
   document.getElementById("todayLabel").textContent=today;
   const tc=document.getElementById("todayCard");
   tc.style.cssText=`background:linear-gradient(135deg,${w.color}20,#1a1a1a);border:1px solid ${w.color}40;border-radius:14px;padding:18px;margin-bottom:18px;`;
