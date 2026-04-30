@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="My Wellness">
+<title>My Wellness</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #0d0d0d; color: #f0ece4; font-family: Georgia, serif; min-height: 100vh; font-size: 16px; }
+button { font-family: Georgia, serif; cursor: pointer; }
+input, textarea, select { font-family: Georgia, serif; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+@keyframes pulse {
+  0%,100% { transform: scale(1); box-shadow: 0 0 12px #e6394640; }
+  50% { transform: scale(1.07); box-shadow: 0 0 28px #e6394680; }
+}
+textarea:focus, input:focus, select:focus { outline: 2px solid #2a9d8f; outline-offset: 2px; }
+.ex-card { background: #1a1a1a; border: 1px solid #252525; border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+.ex-header { padding: 15px 16px 12px; border-bottom: 1px solid #222; }
+.ex-notes { padding: 13px 16px; background: #0f0f0f; }
+.video-btn { display: inline-flex; align-items: center; gap: 6px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; color: #aaa; font-size: 13px; text-decoration: none; margin-top: 8px; }
+.video-btn:hover { border-color: #e63946; color: #e63946; }
+</style>
+</head>
+<body>
+<div id="root" style="max-width:680px;margin:0 auto;min-height:100vh;background:#0d0d0d;">
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(135deg,#1a0a00,#2d1200,#1a0a00);padding:22px 20px 16px;border-bottom:1px solid #3d2000;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:12px;letter-spacing:4px;color:#e63946;text-transform:uppercase;margin-bottom:5px;">Your Wellness Journey</div>
+        <div style="font-size:28px;font-weight:bold;line-height:1.1;">Train. Lose. Win.</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:#aaa;letter-spacing:2px;">CURRENT</div>
+        <div id="currentWeightDisplay" style="font-size:32px;font-weight:bold;color:#e63946;">208<span style="font-size:15px;">lb</span></div>
+        <div style="font-size:12px;color:#2a9d8f;">→ Goal: 185lb</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#aaa;margin-bottom:7px;">
+        <span id="lostLabel">Lost: 0 lbs</span>
+        <span id="remainLabel">23.0 lbs to go</span>
+      </div>
+      <div style="background:#111;border-radius:5px;height:9px;overflow:hidden;">
+        <div id="progressBar" style="width:2%;height:100%;background:linear-gradient(90deg,#e63946,#f4a261);border-radius:5px;transition:width 0.5s;"></div>
+      </div>
+      <div id="progressLabel" style="text-align:center;font-size:13px;color:#f4a261;margin-top:5px;">0.0% to goal</div>
+    </div>
+  </div>
+
+  <!-- POOL BANNER -->
+  <div id="poolBanner" style="background:linear-gradient(90deg,#003d5b,#006994);padding:11px 20px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:22px;">🏊</span>
+    <div>
+      <div style="font-size:11px;color:#7dd4f0;letter-spacing:2px;" id="poolBannerLabel">POOL OPENS IN</div>
+      <div id="poolDays" style="font-size:17px;font-weight:bold;color:#fff;"></div>
+    </div>
+  </div>
+
+  <!-- TIMER BAR -->
+  <div id="timerBar" style="background:#0a0a0a;border-bottom:2px solid #2a9d8f40;padding:14px 16px;display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:11px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;">REST TIMER</div>
+        <div id="timerDisplay" style="font-size:52px;font-weight:bold;color:#f0ece4;line-height:1;">1:00</div>
+        <div id="timerPhase" style="font-size:14px;color:#aaa;margin-top:4px;min-height:20px;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;align-items:flex-end;">
+        <div style="display:flex;gap:7px;">
+          <button onclick="setTimer(30)" style="background:#1e1e1e;border:1px solid #333;border-radius:7px;padding:10px 13px;color:#f0ece4;font-size:15px;">30s</button>
+          <button onclick="setTimer(60)" style="background:#1e1e1e;border:1px solid #333;border-radius:7px;padding:10px 13px;color:#f0ece4;font-size:15px;">60s</button>
+          <button onclick="setTimer(90)" style="background:#1e1e1e;border:1px solid #333;border-radius:7px;padding:10px 13px;color:#f0ece4;font-size:15px;">90s</button>
+        </div>
+        <div style="display:flex;gap:7px;">
+          <button onclick="startTimer()" id="timerStartBtn" style="background:#2a9d8f;border:none;border-radius:7px;padding:11px 18px;color:#fff;font-size:16px;font-weight:bold;">▶ Start</button>
+          <button onclick="resetTimer()" style="background:#333;border:none;border-radius:7px;padding:11px 14px;color:#fff;font-size:16px;">↺</button>
+          <button onclick="hideTimer()" style="background:#222;border:none;border-radius:7px;padding:11px 14px;color:#888;font-size:16px;">✕</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:11px;background:#1a1a1a;border-radius:5px;height:8px;overflow:hidden;">
+      <div id="timerProgress" style="width:100%;height:100%;background:linear-gradient(90deg,#2a9d8f,#457b9d);border-radius:5px;transition:width 1s linear;"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;background:#111;border-bottom:1px solid #222;overflow-x:auto;">
+    <button onclick="showTab('dashboard')" id="tab-dashboard" style="flex:1;min-width:48px;padding:11px 2px;background:#1a0a00;border:none;border-bottom:3px solid #e63946;color:#f0ece4;font-size:10px;">
+      <div style="font-size:15px;">📊</div><div style="margin-top:2px;">Home</div>
+    </button>
+    <button onclick="showTab('workouts')" id="tab-workouts" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">💪</div><div style="margin-top:2px;">Workout</div>
+    </button>
+    <button onclick="showTab('pool')" id="tab-pool" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">🏊</div><div style="margin-top:2px;">Pool</div>
+    </button>
+    <button onclick="showTab('weight')" id="tab-weight" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">⚖️</div><div style="margin-top:2px;">Weight</div>
+    </button>
+    <button onclick="showTab('bp')" id="tab-bp" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">❤️</div><div style="margin-top:2px;">BP</div>
+    </button>
+    <button onclick="showTab('sleep')" id="tab-sleep" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">😴</div><div style="margin-top:2px;">Sleep</div>
+    </button>
+    <button onclick="showTab('nutrition')" id="tab-nutrition" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">🥗</div><div style="margin-top:2px;">Food</div>
+    </button>
+    <button onclick="showTab('stats')" id="tab-stats" style="flex:1;min-width:48px;padding:11px 2px;background:transparent;border:none;border-bottom:3px solid transparent;color:#666;font-size:10px;">
+      <div style="font-size:15px;">📈</div><div style="margin-top:2px;">Stats</div>
+    </button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="tab-content active" style="padding:18px 16px 100px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+      <div style="background:#1a1a1a;border:1px solid #457b9d40;border-radius:12px;padding:14px 8px;text-align:center;">
+        <div style="font-size:24px;font-weight:bold;color:#457b9d;">56</div>
+        <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">Age</div>
+      </div>
+      <div style="background:#1a1a1a;border:1px solid #f4a26140;border-radius:12px;padding:14px 8px;text-align:center;">
+        <div id="bmiDisplay" style="font-size:24px;font-weight:bold;color:#f4a261;">30.7</div>
+        <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">BMI</div>
+      </div>
+      <div style="background:#1a1a1a;border:1px solid #2a9d8f40;border-radius:12px;padding:14px 8px;text-align:center;">
+        <div id="sessionsDisplay" style="font-size:24px;font-weight:bold;color:#2a9d8f;">0</div>
+        <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">Sessions</div>
+      </div>
+      <div style="background:#1a1a1a;border:1px solid #6a4c9340;border-radius:12px;padding:14px 8px;text-align:center;">
+        <div id="sleepDisplay" style="font-size:24px;font-weight:bold;color:#6a4c93;">—</div>
+        <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">Sleep hrs</div>
+      </div>
+    </div>
+
+    <div id="bpSummary" style="display:none;background:#1a0a0a;border-radius:12px;padding:14px;margin-bottom:14px;"></div>
+
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:10px;">Today — <span id="todayLabel"></span></div>
+    <div id="todayCard" style="border-radius:14px;padding:18px;margin-bottom:18px;"></div>
+
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:10px;">This Week</div>
+    <div id="weekRow" style="display:flex;gap:5px;margin-bottom:18px;"></div>
+
+    <div style="background:#0a1a0a;border:1px solid #2a9d8f30;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#2a9d8f;text-transform:uppercase;margin-bottom:11px;">⏱️ Quick Timer</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button onclick="showTimerWith(30)" style="background:#1e1e1e;border:1px solid #2a9d8f40;border-radius:10px;padding:13px 18px;color:#f0ece4;font-size:16px;font-weight:bold;">30s</button>
+        <button onclick="showTimerWith(60)" style="background:#1e1e1e;border:1px solid #2a9d8f40;border-radius:10px;padding:13px 18px;color:#f0ece4;font-size:16px;font-weight:bold;">60s</button>
+        <button onclick="showTimerWith(90)" style="background:#1e1e1e;border:1px solid #2a9d8f40;border-radius:10px;padding:13px 18px;color:#f0ece4;font-size:16px;font-weight:bold;">90s</button>
+      </div>
+    </div>
+
+    <div style="background:#100500;border:1px solid #e6394625;border-radius:14px;padding:16px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#e63946;text-transform:uppercase;margin-bottom:11px;">⚠️ Health Notes</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Log BP daily in the ❤️ tab — you have a prescription ready if needed</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Keep cardio in Zone 2 — you should be able to hold a conversation</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Always stretch before AND after — minimum 10 min each</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Target 150g protein/day and 2,300-2,500 calories on workout days</div>
+      <div style="font-size:15px;color:#ccc;line-height:1.6;">• Aim for 7 hours sleep — poor sleep raises BP</div>
+    </div>
+  </div>
+
+  <!-- WORKOUTS -->
+  <div id="page-workouts" class="tab-content" style="padding:18px 16px 100px;">
+
+    <!-- Week selector for May program -->
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#888;text-transform:uppercase;margin-bottom:10px;">📅 May Program — Select Week</div>
+      <div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;" id="weekSelector"></div>
+      <div style="font-size:12px;letter-spacing:3px;color:#888;text-transform:uppercase;margin-bottom:10px;">Select Day</div>
+      <div id="datePicker" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;"></div>
+    </div>
+
+    <div id="workoutHeader" style="border-radius:14px;padding:18px;margin-bottom:4px;"></div>
+    <div style="font-size:12px;letter-spacing:3px;color:#2a9d8f;text-transform:uppercase;margin-bottom:11px;margin-top:16px;">💪 Exercises</div>
+    <div id="exerciseList"></div>
+    <div id="cooldownBlock" style="background:#1a1a1a;border:1px solid #6a4c9325;border-radius:12px;padding:16px;margin-bottom:13px;display:none;">
+      <div style="font-size:11px;letter-spacing:3px;color:#6a4c93;text-transform:uppercase;margin-bottom:7px;">Cool-Down</div>
+      <div id="cooldownText" style="font-size:16px;color:#ccc;line-height:1.5;"></div>
+    </div>
+
+    <div style="background:#0d1a0d;border:2px solid #2a9d8f;border-radius:14px;padding:16px;margin-bottom:13px;">
+      <div style="font-size:16px;font-weight:bold;color:#2a9d8f;margin-bottom:4px;">📋 Session Notes</div>
+      <div style="font-size:14px;color:#777;margin-bottom:11px;">What did you actually do? Any changes?</div>
+      <textarea id="sessionLog" placeholder="e.g. Did 45 min walk instead · added push-ups · used 35 lbs on squats" style="width:100%;background:#111;border:1px solid #2a9d8f60;border-radius:10px;padding:14px;color:#f0ece4;font-size:17px;line-height:1.6;resize:none;min-height:110px;"></textarea>
+      <div style="display:flex;gap:9px;margin-top:11px;align-items:center;">
+        <button onclick="saveSessionLog()" style="flex:1;background:#2a9d8f;border:none;border-radius:10px;padding:14px;color:#fff;font-size:16px;font-weight:bold;">💾 Save Notes</button>
+      </div>
+      <div id="sessionSavedMsg" style="display:none;margin-top:9px;font-size:15px;color:#2a9d8f;text-align:center;font-weight:bold;">✅ Saved!</div>
+    </div>
+
+    <div style="display:flex;gap:9px;margin-bottom:10px;">
+      <button id="markDoneBtn" onclick="toggleWorkoutDone()" style="flex:1;padding:16px;border:none;border-radius:14px;font-size:17px;font-weight:bold;color:#fff;background:#e63946;">Mark Day Complete</button>
+      <button onclick="showTimerWith(60)" style="background:#1e1e1e;border:1px solid #333;border-radius:14px;padding:16px 18px;color:#f0ece4;font-size:18px;">⏱️</button>
+    </div>
+  </div>
+
+  <!-- POOL TAB -->
+  <div id="page-pool" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:6px;">🏊 Pool Workouts</div>
+    <div style="font-size:14px;color:#888;margin-bottom:16px;">Using your AquaStrong set — dumbbells, ankle cuffs, and gloves.</div>
+
+    <div id="poolCountdownCard" style="background:linear-gradient(90deg,#003d5b,#006994);border-radius:14px;padding:18px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🏊</div>
+      <div id="poolCountdownText" style="font-size:20px;font-weight:bold;color:#fff;"></div>
+      <div style="font-size:14px;color:#7dd4f0;margin-top:6px;">Pool opens May 14 — workouts unlock then!</div>
+    </div>
+
+    <!-- POOL CARDIO -->
+    <div style="font-size:13px;letter-spacing:3px;color:#006994;text-transform:uppercase;margin-bottom:12px;">🌊 Cardio Workouts</div>
+
+    <div style="background:#1a1a1a;border:1px solid #006994;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:17px;font-weight:bold;color:#7dd4f0;margin-bottom:4px;">Aqua Jog Intervals</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">30-40 min · ~400 cal · Great for BP</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• 5 min easy water walk warm-up<br>• 8 x (1 min hard jog / 1 min easy walk)<br>• Wear ankle cuffs for added resistance<br>• 5 min cool-down walk<br>• Arms pumping — wear gloves for resistance</div>
+      <a href="https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #006994;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:17px;font-weight:bold;color:#7dd4f0;margin-bottom:4px;">Lap Swimming</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">30-45 min · ~500 cal · Best cardio for BP</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• Freestyle laps — 2 lengths rest 30s<br>• Build to 20 continuous laps<br>• Mix in backstroke for variety<br>• Cool down with easy float kicks<br>• Use gloves to increase arm resistance</div>
+      <a href="https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #006994;border-radius:14px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:17px;font-weight:bold;color:#7dd4f0;margin-bottom:4px;">Pool HIIT</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">25 min · ~450 cal · High intensity</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• Jump squats in shallow end x 20<br>• Tuck jumps x 15<br>• Pool sprints length x 4<br>• Flutter kicks holding edge 30s x 4<br>• Wear ankle cuffs for all exercises</div>
+      <a href="https://www.youtube.com/results?search_query=pool+HIIT+workout+water+resistance" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <!-- POOL STRENGTH -->
+    <div style="font-size:13px;letter-spacing:3px;color:#006994;text-transform:uppercase;margin-bottom:12px;">💪 Strength Workouts</div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a9d8f;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:17px;font-weight:bold;color:#2a9d8f;margin-bottom:4px;">Aqua Dumbbell Circuit</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">35 min · ~380 cal · Full body strength</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• Bicep curls — 3x15 with aqua dumbbells<br>• Tricep pushdowns — 3x15<br>• Chest press standing — 3x12<br>• Lateral raises — 3x15<br>• Upright rows — 3x12<br>• Rest 45s between sets</div>
+      <a href="https://www.youtube.com/results?search_query=aqua+dumbbell+workout+pool+strength" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a9d8f;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:17px;font-weight:bold;color:#2a9d8f;margin-bottom:4px;">Leg Resistance Circuit</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">30 min · ~350 cal · Legs & glutes</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• Wear ankle cuffs throughout<br>• Leg kicks forward/back — 3x20 each<br>• Side leg raises — 3x15 each<br>• Water walking lunges — 3x12 each<br>• Standing bicycle — 3x20<br>• Jump squats — 3x15</div>
+      <a href="https://www.youtube.com/results?search_query=aqua+ankle+cuff+leg+workout+pool" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #2a9d8f;border-radius:14px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:17px;font-weight:bold;color:#2a9d8f;margin-bottom:4px;">Full Body AquaStrong</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">45 min · ~480 cal · Combines all equipment</div>
+      <div style="font-size:14px;color:#ccc;line-height:1.6;margin-bottom:10px;">• Warm up: 5 min aqua jog<br>• Dumbbell curls + press — 3x12<br>• Ankle cuff kicks — 3x15 each<br>• Glove resistance punches — 3x30s<br>• Water squat jumps — 3x12<br>• Plank on pool edge — 3x30s<br>• Cool down: easy walk + stretch</div>
+      <a href="https://www.youtube.com/results?search_query=aqua+fitness+full+body+pool+workout" target="_blank" class="video-btn">▶ Watch Video</a>
+    </div>
+
+    <!-- POOL TIPS -->
+    <div style="background:#100500;border:1px solid #e6394625;border-radius:14px;padding:16px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#e63946;text-transform:uppercase;margin-bottom:11px;">⚠️ Pool Safety & BP</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Water naturally lowers BP — great for you</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Stay hydrated — you sweat more than you think</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Start in waist-deep water for all exercises</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Log BP before and after pool sessions</div>
+      <div style="font-size:15px;color:#ccc;line-height:1.6;">• Replace 1-2 gym days per week with pool from May 14</div>
+    </div>
+  </div>
+
+  <!-- WEIGHT -->
+  <div id="page-weight" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:14px;">Log Your Weight</div>
+    <div style="background:#060f0a;border:1px solid #2a9d8f25;border-radius:12px;padding:13px;margin-bottom:14px;font-size:15px;color:#2a9d8f;">
+      💡 Tap the field and use the <strong style="color:#f4a261;">🎤 keyboard mic</strong> to speak your weight
+    </div>
+    <div style="display:flex;gap:11px;margin-bottom:20px;">
+      <input id="weightInput" type="number" placeholder="Weight (lbs)" style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;color:#f0ece4;font-size:22px;" />
+      <button onclick="logWeight()" style="background:#e63946;color:#fff;border:none;border-radius:12px;padding:16px 22px;font-size:18px;font-weight:bold;">Log</button>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:11px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:12px;">Weight Trend</div>
+      <svg id="weightChart" width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+      <div style="font-size:12px;color:#2a9d8f;text-align:right;margin-top:5px;">— 185 lb goal</div>
+    </div>
+    <div id="weightList"></div>
+  </div>
+
+  <!-- BLOOD PRESSURE -->
+  <div id="page-bp" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:14px;">❤️ Blood Pressure Log</div>
+    <div style="background:#1a0a0a;border:1px solid #e6394630;border-radius:12px;padding:14px;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;"><span style="color:#888;">Normal:</span><span style="color:#2a9d8f;font-weight:bold;">below 120/80</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;"><span style="color:#888;">Elevated:</span><span style="color:#f4a261;font-weight:bold;">120-129 / below 80</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;"><span style="color:#888;">High Stage 1:</span><span style="color:#e76f51;font-weight:bold;">130-139 / 80-89</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:#888;">High Stage 2:</span><span style="color:#e63946;font-weight:bold;">140+ / 90+</span></div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:16px;font-weight:bold;color:#f0ece4;margin-bottom:14px;">Log a Reading</div>
+      <div style="display:flex;align-items:flex-end;gap:11px;margin-bottom:12px;">
+        <div style="flex:1;"><div style="font-size:13px;color:#aaa;margin-bottom:5px;">Systolic (top)</div><input id="bpSystolic" type="number" placeholder="e.g. 128" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:14px;color:#f0ece4;font-size:22px;" /></div>
+        <div style="font-size:26px;color:#555;padding-bottom:8px;">/</div>
+        <div style="flex:1;"><div style="font-size:13px;color:#aaa;margin-bottom:5px;">Diastolic (bottom)</div><input id="bpDiastolic" type="number" placeholder="e.g. 82" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:14px;color:#f0ece4;font-size:22px;" /></div>
+      </div>
+      <input id="bpNote" type="text" placeholder="Optional note (e.g. morning, after workout)" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px;color:#f0ece4;font-size:16px;margin-bottom:12px;" />
+      <button onclick="logBP()" style="width:100%;background:#e63946;color:#fff;border:none;border-radius:10px;padding:15px;font-size:17px;font-weight:bold;">Log Blood Pressure</button>
+      <div id="bpSavedMsg" style="display:none;text-align:center;color:#2a9d8f;font-size:15px;font-weight:bold;margin-top:9px;">✅ Logged!</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:11px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:11px;">Trend</div>
+      <svg id="bpChart" width="100%" height="130" viewBox="0 0 300 130" preserveAspectRatio="none"></svg>
+      <div style="display:flex;gap:14px;margin-top:7px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:5px;"><div style="width:18px;height:3px;background:#e63946;border-radius:2px;"></div><span style="font-size:12px;color:#aaa;">Systolic</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><div style="width:18px;height:3px;background:#457b9d;border-radius:2px;"></div><span style="font-size:12px;color:#aaa;">Diastolic</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><div style="width:18px;height:2px;background:#2a9d8f;border-radius:2px;"></div><span style="font-size:12px;color:#aaa;">120 target</span></div>
+      </div>
+    </div>
+    <div id="bpList"></div>
+  </div>
+
+  <!-- SLEEP -->
+  <div id="page-sleep" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:14px;">😴 Sleep Tracker</div>
+    <div style="background:#060a1a;border:1px solid #6a4c9330;border-radius:12px;padding:13px;margin-bottom:16px;font-size:15px;color:#a78fd4;">
+      💡 Target: <strong style="color:#f4a261;">7 hours</strong> per night — poor sleep raises blood pressure
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:16px;font-weight:bold;color:#f0ece4;margin-bottom:14px;">Log Last Night's Sleep</div>
+      <div style="display:flex;gap:11px;align-items:flex-end;margin-bottom:12px;">
+        <div style="flex:1;">
+          <div style="font-size:13px;color:#aaa;margin-bottom:5px;">Hours slept</div>
+          <input id="sleepHours" type="number" step="0.5" min="0" max="14" placeholder="e.g. 7.5" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:14px;color:#f0ece4;font-size:22px;" />
+        </div>
+        <button onclick="logSleep()" style="background:#6a4c93;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:17px;font-weight:bold;">Log</button>
+      </div>
+      <div id="sleepSavedMsg" style="display:none;text-align:center;color:#2a9d8f;font-size:15px;font-weight:bold;">✅ Sleep logged!</div>
+    </div>
+
+    <!-- Sleep stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+      <div style="background:#1a1a1a;border:1px solid #6a4c9340;border-radius:12px;padding:14px;text-align:center;">
+        <div id="sleepAvg" style="font-size:24px;font-weight:bold;color:#6a4c93;">—</div>
+        <div style="font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin-top:3px;">Avg hrs</div>
+      </div>
+      <div style="background:#1a1a1a;border:1px solid #2a9d8f40;border-radius:12px;padding:14px;text-align:center;">
+        <div id="sleepGoalDays" style="font-size:24px;font-weight:bold;color:#2a9d8f;">—</div>
+        <div style="font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin-top:3px;">Goal days</div>
+      </div>
+      <div style="background:#1a1a1a;border:1px solid #f4a26140;border-radius:12px;padding:14px;text-align:center;">
+        <div id="sleepStreak" style="font-size:24px;font-weight:bold;color:#f4a261;">—</div>
+        <div style="font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin-top:3px;">Streak</div>
+      </div>
+    </div>
+
+    <!-- Sleep chart -->
+    <div style="background:#1a1a1a;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:11px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:12px;">Sleep Trend (last 14 nights)</div>
+      <svg id="sleepChart" width="100%" height="110" viewBox="0 0 300 110" preserveAspectRatio="none"></svg>
+      <div style="font-size:12px;color:#6a4c93;text-align:right;margin-top:5px;">— 7hr goal</div>
+    </div>
+
+    <div id="sleepList"></div>
+
+    <!-- Sleep tips -->
+    <div style="background:#100500;border:1px solid #e6394625;border-radius:14px;padding:16px;margin-top:6px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#e63946;text-transform:uppercase;margin-bottom:11px;">Sleep & Blood Pressure</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Less than 6 hours raises BP significantly</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Consistent sleep time matters more than total hours</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Avoid alcohol within 3 hours of bedtime</div>
+      <div style="font-size:15px;color:#ccc;margin-bottom:9px;line-height:1.6;">• Keep room cool and dark — 65-68°F ideal</div>
+      <div style="font-size:15px;color:#ccc;line-height:1.6;">• Morning BP spike can indicate poor sleep quality</div>
+    </div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div id="page-nutrition" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:14px;">🥗 Nutrition Tracker</div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#f4a261;text-transform:uppercase;margin-bottom:11px;">Today's Progress</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:#111;border-radius:10px;padding:13px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#f4a261;">2,400</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">Cal Goal</div>
+          <div id="calConsumed" style="font-size:17px;color:#f0ece4;margin-top:4px;">0 eaten</div>
+          <div id="calRemaining" style="font-size:12px;color:#2a9d8f;margin-top:2px;">2,400 left</div>
+        </div>
+        <div style="background:#111;border-radius:10px;padding:13px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#457b9d;">150g</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">Protein Goal</div>
+          <div id="proteinConsumed" style="font-size:17px;color:#f0ece4;margin-top:4px;">0g eaten</div>
+          <div id="proteinRemaining" style="font-size:12px;color:#2a9d8f;margin-top:2px;">150g left</div>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:4px;"><span>Calories</span><span id="calPct">0%</span></div>
+        <div style="background:#222;border-radius:4px;height:8px;overflow:hidden;"><div id="calBar" style="width:0%;height:100%;background:linear-gradient(90deg,#f4a261,#e63946);border-radius:4px;transition:width 0.3s;"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:4px;"><span>Protein</span><span id="proteinPct">0%</span></div>
+        <div style="background:#222;border-radius:4px;height:8px;overflow:hidden;"><div id="proteinBar" style="width:0%;height:100%;background:linear-gradient(90deg,#457b9d,#2a9d8f);border-radius:4px;transition:width 0.3s;"></div></div>
+      </div>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#2a9d8f;text-transform:uppercase;margin-bottom:11px;">⚡ Quick Add</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="quickFoods"></div>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;letter-spacing:3px;color:#f4a261;text-transform:uppercase;margin-bottom:11px;">➕ Add Custom Food</div>
+      <input id="foodName" type="text" placeholder="Food name" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px;color:#f0ece4;font-size:16px;margin-bottom:9px;" />
+      <div style="display:flex;gap:9px;margin-bottom:9px;">
+        <div style="flex:1;"><div style="font-size:12px;color:#aaa;margin-bottom:4px;">Calories</div><input id="foodCal" type="number" placeholder="300" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px;color:#f0ece4;font-size:18px;" /></div>
+        <div style="flex:1;"><div style="font-size:12px;color:#aaa;margin-bottom:4px;">Protein (g)</div><input id="foodProtein" type="number" placeholder="25" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px;color:#f0ece4;font-size:18px;" /></div>
+      </div>
+      <button onclick="addCustomFood()" style="width:100%;background:#f4a261;color:#fff;border:none;border-radius:10px;padding:14px;font-size:16px;font-weight:bold;">Add Food</button>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:11px;">Today's Log</div>
+    <div id="foodLog"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="page-stats" class="tab-content" style="padding:18px 16px 100px;">
+    <div style="font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:14px;">Your Stats &amp; Goals</div>
+    <div id="statsList"></div>
+    <div style="background:#0d0a1a;border:2px solid #6a4c93;border-radius:14px;padding:16px;margin-top:14px;margin-bottom:14px;">
+      <div style="font-size:16px;font-weight:bold;color:#a78fd4;margin-bottom:5px;">📤 Share with Claude</div>
+      <div style="font-size:14px;color:#888;margin-bottom:13px;">Generate a full summary and paste into Claude for coaching feedback.</div>
+      <button onclick="generateExport()" style="width:100%;background:#6a4c93;border:none;border-radius:10px;padding:15px;color:#fff;font-size:16px;font-weight:bold;margin-bottom:11px;">📋 Generate My Summary</button>
+      <div id="exportOutput" style="display:none;">
+        <textarea id="exportText" readonly style="width:100%;background:#111;border:1px solid #6a4c93;border-radius:10px;padding:13px;color:#f0ece4;font-size:14px;line-height:1.6;resize:none;min-height:260px;"></textarea>
+        <button onclick="copyExport()" style="width:100%;background:#2a9d8f;border:none;border-radius:10px;padding:15px;color:#fff;font-size:16px;font-weight:bold;margin-top:9px;">📋 Copy to Clipboard</button>
+        <div id="copiedMsg" style="display:none;text-align:center;color:#2a9d8f;font-size:14px;font-weight:bold;margin-top:9px;">✅ Copied! Paste into Claude chat.</div>
+      </div>
+    </div>
+    <div style="background:#100500;border:1px solid #e6394625;border-radius:14px;padding:16px;">
+      <div style="font-size:11px;letter-spacing:3px;color:#e63946;text-transform:uppercase;margin-bottom:13px;">Daily Targets</div>
+      <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="font-size:16px;color:#ccc;">Calories (workout)</span><span style="font-size:16px;font-weight:bold;color:#f4a261;">2,300-2,500</span></div></div>
+      <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="font-size:16px;color:#ccc;">Protein</span><span style="font-size:16px;font-weight:bold;color:#f4a261;">150g/day</span></div></div>
+      <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="font-size:16px;color:#ccc;">Water</span><span style="font-size:16px;font-weight:bold;color:#f4a261;">100 oz/day</span></div></div>
+      <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;"><span style="font-size:16px;color:#ccc;">Sleep</span><span style="font-size:16px;font-weight:bold;color:#f4a261;">7 hours</span></div></div>
+      <div><div style="display:flex;justify-content:space-between;"><span style="font-size:16px;color:#ccc;">BP Target</span><span style="font-size:16px;font-weight:bold;color:#f4a261;">below 130/80</span></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS & WORKOUT DATA
+// ============================================================
+const INITIAL_WEIGHT=208,GOAL_WEIGHT=185,HEIGHT=69;
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const CAL_GOAL=2400,PROTEIN_GOAL=150,SLEEP_GOAL=7;
+const POOL_OPEN_DATE="2026-05-14";
+
+// May workout program - 5 weeks, progressive
+const MAY_PROGRAM = {
+  1: { // Week 1 May 1-4
+    label: "Week 1 — Foundation",
+    Monday:{label:"HIIT + Boxing",color:"#e63946",icon:"🥊",warmup:"10 min dynamic stretching",exercises:[
+      {name:"Heavy Bag Intervals",sets:"5 rounds",reps:"30s hard / 30s rest",video:"https://www.youtube.com/results?search_query=heavy+bag+boxing+workout+beginner"},
+      {name:"Plyo Box Jumps",sets:"3",reps:"10 reps",video:"https://www.youtube.com/results?search_query=plyo+box+jump+proper+form"},
+      {name:"Kettlebell Swings",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=kettlebell+swing+proper+form+hip+hinge"},
+      {name:"Slam Ball Slams",sets:"3",reps:"10 reps",video:"https://www.youtube.com/results?search_query=slam+ball+overhead+slam+technique"},
+      {name:"TRX Rows",sets:"3",reps:"10 reps",video:"https://www.youtube.com/results?search_query=TRX+row+proper+form+tutorial"},
+      {name:"Push-Ups",sets:"2",reps:"15 reps",video:"https://www.youtube.com/results?search_query=push+up+proper+form+beginner"}
+    ],cooldown:"10 min foam roll + stretch",duration:55,calories:460},
+    Tuesday:{label:"Elliptical + Strength",color:"#457b9d",icon:"💪",warmup:"10 min light stretch",exercises:[
+      {name:"Elliptical",sets:"1",reps:"30 min — Zone 2",video:"https://www.youtube.com/results?search_query=elliptical+proper+form+zone+2+cardio"},
+      {name:"Dumbbell Goblet Squat",sets:"3",reps:"12 reps @ 30 lbs",video:"https://www.youtube.com/results?search_query=goblet+squat+dumbbell+form+tutorial"},
+      {name:"Dumbbell Romanian Deadlift",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=dumbbell+romanian+deadlift+form"},
+      {name:"Dumbbell Chest Press",sets:"3",reps:"12 reps @ 40 lbs",video:"https://www.youtube.com/results?search_query=dumbbell+chest+press+proper+form"},
+      {name:"TRX Row",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=TRX+row+tutorial"},
+      {name:"Resistance Band Lateral Walk",sets:"3",reps:"15 each side",video:"https://www.youtube.com/results?search_query=resistance+band+lateral+walk+hip+abductor"}
+    ],cooldown:"10 min full body stretch",duration:60,calories:420},
+    Wednesday:{label:"Active Recovery",color:"#2a9d8f",icon:"🧘",warmup:"5 min gentle walk",exercises:[
+      {name:"Outdoor Walk",sets:"1",reps:"30-45 min",video:"https://www.youtube.com/results?search_query=walking+for+weight+loss+technique"},
+      {name:"Foam Rolling",sets:"1",reps:"10 min",video:"https://www.youtube.com/results?search_query=foam+rolling+full+body+routine"},
+      {name:"Hamstring Stretch — Band",sets:"2",reps:"45 sec each",video:"https://www.youtube.com/results?search_query=resistance+band+hamstring+stretch+lying"},
+      {name:"Hip Flexor Stretch — Band",sets:"2",reps:"45 sec each",video:"https://www.youtube.com/results?search_query=resistance+band+hip+flexor+stretch"},
+      {name:"Shoulder Dislocations",sets:"2",reps:"12 reps",video:"https://www.youtube.com/results?search_query=resistance+band+shoulder+dislocations+mobility"}
+    ],cooldown:"10 min savasana",duration:45,calories:200},
+    Thursday:{label:"HIIT + Core",color:"#e76f51",icon:"🔥",warmup:"10 min dynamic warmup",exercises:[
+      {name:"Kettlebell Circuit",sets:"3 rounds",reps:"40s on / 20s off",video:"https://www.youtube.com/results?search_query=kettlebell+circuit+workout+beginner"},
+      {name:"Plyo Box Step-Ups",sets:"3",reps:"10 each leg",video:"https://www.youtube.com/results?search_query=box+step+up+exercise+proper+form"},
+      {name:"TRX Plank",sets:"3",reps:"25s hold",video:"https://www.youtube.com/results?search_query=TRX+plank+core+tutorial"},
+      {name:"Stability Ball Crunch",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=stability+ball+crunch+proper+form"},
+      {name:"Slam Ball Russian Twist",sets:"3",reps:"16 reps",video:"https://www.youtube.com/results?search_query=russian+twist+medicine+ball+core"},
+      {name:"Resistance Band Pallof Press",sets:"3",reps:"10 each side",video:"https://www.youtube.com/results?search_query=pallof+press+resistance+band+anti+rotation"}
+    ],cooldown:"10 min stretch — hip flexors",duration:55,calories:440},
+    Friday:{label:"Longer Cardio",color:"#6a4c93",icon:"🚴",warmup:"10 min easy warm-up",exercises:[
+      {name:"Elliptical Intervals",sets:"1",reps:"40 min — moderate",video:"https://www.youtube.com/results?search_query=elliptical+interval+training+workout"},
+      {name:"Pull-Up Bar Dead Hangs",sets:"3",reps:"20s hold",video:"https://www.youtube.com/results?search_query=dead+hang+pull+up+bar+spine+decompression"},
+      {name:"Walking / Light Bike",sets:"1",reps:"If energy allows",video:"https://www.youtube.com/results?search_query=walking+for+weight+loss+fat+burn"}
+    ],cooldown:"15 min full stretch + foam roll",duration:60,calories:480},
+    Saturday:{label:"Outdoor Activity",color:"#f4a261",icon:"🎾",warmup:"5 min dynamic warmup",exercises:[
+      {name:"Pickleball",sets:"—",reps:"60-90 min",video:"https://www.youtube.com/results?search_query=pickleball+beginner+technique+tips"},
+      {name:"Mountain Biking",sets:"—",reps:"45-60 min",video:"https://www.youtube.com/results?search_query=mountain+biking+beginner+tips"},
+      {name:"Swimming (pool opens May 14)",sets:"—",reps:"30-45 min",video:"https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan"}
+    ],cooldown:"10 min stretch",duration:75,calories:480},
+    Sunday:{label:"Full Rest",color:"#adb5bd",icon:"😴",warmup:"",exercises:[
+      {name:"Complete Rest",sets:"—",reps:"—",video:""},
+      {name:"Optional: Light Walk",sets:"—",reps:"20-30 min",video:""}
+    ],cooldown:"",duration:0,calories:0}
+  },
+  2: { // Week 2 — Building
+    label: "Week 2 — Building",
+    Monday:{label:"HIIT + Boxing",color:"#e63946",icon:"🥊",warmup:"10 min dynamic stretching",exercises:[
+      {name:"Heavy Bag Intervals",sets:"6 rounds",reps:"35s hard / 25s rest",video:"https://www.youtube.com/results?search_query=heavy+bag+boxing+workout+intermediate"},
+      {name:"Plyo Box Jumps",sets:"4",reps:"10 reps",video:"https://www.youtube.com/results?search_query=plyo+box+jump+proper+form"},
+      {name:"Kettlebell Swings",sets:"4",reps:"15 reps",video:"https://www.youtube.com/results?search_query=kettlebell+swing+proper+form+hip+hinge"},
+      {name:"Slam Ball Slams",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=slam+ball+overhead+slam+technique"},
+      {name:"TRX Rows",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=TRX+row+proper+form+tutorial"},
+      {name:"Push-Ups",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=push+up+proper+form+beginner"}
+    ],cooldown:"10 min foam roll + stretch",duration:60,calories:500},
+    Tuesday:{label:"Elliptical + Strength",color:"#457b9d",icon:"💪",warmup:"10 min light stretch",exercises:[
+      {name:"Elliptical",sets:"1",reps:"35 min — Zone 2",video:"https://www.youtube.com/results?search_query=elliptical+proper+form+zone+2+cardio"},
+      {name:"Dumbbell Goblet Squat",sets:"3",reps:"12 reps @ 35 lbs",video:"https://www.youtube.com/results?search_query=goblet+squat+dumbbell+form+tutorial"},
+      {name:"Dumbbell Romanian Deadlift",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=dumbbell+romanian+deadlift+form"},
+      {name:"Dumbbell Chest Press",sets:"3",reps:"12 reps @ 42.5 lbs",video:"https://www.youtube.com/results?search_query=dumbbell+chest+press+proper+form"},
+      {name:"TRX Row",sets:"3",reps:"12 reps",video:"https://www.youtube.com/results?search_query=TRX+row+tutorial"},
+      {name:"Resistance Band Lateral Walk",sets:"3",reps:"15 each side",video:"https://www.youtube.com/results?search_query=resistance+band+lateral+walk+hip+abductor"}
+    ],cooldown:"10 min full body stretch",duration:65,calories:440},
+    Wednesday:{label:"Active Recovery + Pool",color:"#2a9d8f",icon:"🧘",warmup:"5 min gentle walk",exercises:[
+      {name:"Pool Walk / Aqua Jog",sets:"1",reps:"30 min (if pool open)",video:"https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout"},
+      {name:"Foam Rolling",sets:"1",reps:"10 min",video:"https://www.youtube.com/results?search_query=foam+rolling+full+body+routine"},
+      {name:"Hamstring Stretch — Band",sets:"2",reps:"45 sec each",video:"https://www.youtube.com/results?search_query=resistance+band+hamstring+stretch+lying"},
+      {name:"Hip Flexor Stretch — Band",sets:"2",reps:"45 sec each",video:"https://www.youtube.com/results?search_query=resistance+band+hip+flexor+stretch"},
+      {name:"Lat Stretch — Band",sets:"2",reps:"45 sec",video:"https://www.youtube.com/results?search_query=resistance+band+lat+stretch"}
+    ],cooldown:"10 min savasana",duration:50,calories:220},
+    Thursday:{label:"HIIT + Core",color:"#e76f51",icon:"🔥",warmup:"10 min dynamic warmup",exercises:[
+      {name:"Kettlebell Circuit",sets:"4 rounds",reps:"40s on / 20s off",video:"https://www.youtube.com/results?search_query=kettlebell+circuit+workout+beginner"},
+      {name:"Plyo Box Step-Ups",sets:"3",reps:"12 each leg",video:"https://www.youtube.com/results?search_query=box+step+up+exercise+proper+form"},
+      {name:"TRX Plank",sets:"3",reps:"30s hold",video:"https://www.youtube.com/results?search_query=TRX+plank+core+tutorial"},
+      {name:"Stability Ball Crunch",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=stability+ball+crunch+proper+form"},
+      {name:"Slam Ball Russian Twist",sets:"3",reps:"20 reps",video:"https://www.youtube.com/results?search_query=russian+twist+medicine+ball+core"},
+      {name:"Resistance Band Pallof Press",sets:"3",reps:"12 each side",video:"https://www.youtube.com/results?search_query=pallof+press+resistance+band+anti+rotation"}
+    ],cooldown:"10 min stretch — hip flexors",duration:60,calories:470},
+    Friday:{label:"Longer Cardio",color:"#6a4c93",icon:"🚴",warmup:"10 min easy warm-up",exercises:[
+      {name:"Elliptical Intervals",sets:"1",reps:"45 min — moderate/hard",video:"https://www.youtube.com/results?search_query=elliptical+interval+training+workout"},
+      {name:"Pull-Up Bar Dead Hangs",sets:"3",reps:"25s hold",video:"https://www.youtube.com/results?search_query=dead+hang+pull+up+bar+spine+decompression"},
+      {name:"Walking / Light Bike",sets:"1",reps:"If energy allows",video:"https://www.youtube.com/results?search_query=walking+for+weight+loss+fat+burn"}
+    ],cooldown:"15 min full stretch + foam roll",duration:65,calories:510},
+    Saturday:{label:"Outdoor + Pool Activity",color:"#f4a261",icon:"🎾",warmup:"5 min dynamic warmup",exercises:[
+      {name:"Pickleball",sets:"—",reps:"60-90 min",video:"https://www.youtube.com/results?search_query=pickleball+beginner+technique+tips"},
+      {name:"Aqua Jog (pool open May 14)",sets:"—",reps:"30 min",video:"https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout"},
+      {name:"Mountain Biking",sets:"—",reps:"45-60 min",video:"https://www.youtube.com/results?search_query=mountain+biking+beginner+tips"}
+    ],cooldown:"10 min stretch",duration:75,calories:500},
+    Sunday:{label:"Full Rest",color:"#adb5bd",icon:"😴",warmup:"",exercises:[
+      {name:"Complete Rest",sets:"—",reps:"—",video:""},
+      {name:"Optional: Light Walk",sets:"—",reps:"20-30 min",video:""}
+    ],cooldown:"",duration:0,calories:0}
+  },
+  3: { // Week 3 — Intensity up
+    label: "Week 3 — Intensity Up",
+    Monday:{label:"HIIT + Boxing",color:"#e63946",icon:"🥊",warmup:"10 min dynamic stretching",exercises:[
+      {name:"Heavy Bag Intervals",sets:"6 rounds",reps:"40s hard / 20s rest",video:"https://www.youtube.com/results?search_query=heavy+bag+boxing+workout+intermediate"},
+      {name:"Plyo Box Jumps",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=plyo+box+jump+proper+form"},
+      {name:"Kettlebell Swings",sets:"4",reps:"20 reps",video:"https://www.youtube.com/results?search_query=kettlebell+swing+proper+form+hip+hinge"},
+      {name:"Slam Ball Slams",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=slam+ball+overhead+slam+technique"},
+      {name:"TRX Rows",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=TRX+row+proper+form+tutorial"},
+      {name:"Push-Ups",sets:"3",reps:"20 reps",video:"https://www.youtube.com/results?search_query=push+up+proper+form+beginner"}
+    ],cooldown:"10 min foam roll + stretch",duration:65,calories:530},
+    Tuesday:{label:"Strength + Pool",color:"#457b9d",icon:"💪",warmup:"10 min light stretch",exercises:[
+      {name:"Elliptical or Aqua Jog",sets:"1",reps:"30 min",video:"https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout"},
+      {name:"Dumbbell Goblet Squat",sets:"4",reps:"12 reps @ 35 lbs",video:"https://www.youtube.com/results?search_query=goblet+squat+dumbbell+form+tutorial"},
+      {name:"Dumbbell Romanian Deadlift",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=dumbbell+romanian+deadlift+form"},
+      {name:"Dumbbell Chest Press",sets:"4",reps:"10 reps @ 45 lbs",video:"https://www.youtube.com/results?search_query=dumbbell+chest+press+proper+form"},
+      {name:"TRX Row",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=TRX+row+tutorial"},
+      {name:"Aqua Dumbbell Curls (pool)",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=aqua+dumbbell+workout+pool+strength"}
+    ],cooldown:"10 min full body stretch",duration:70,calories:460},
+    Wednesday:{label:"Active Recovery + Pool",color:"#2a9d8f",icon:"🧘",warmup:"5 min gentle walk",exercises:[
+      {name:"Lap Swimming",sets:"1",reps:"30 min",video:"https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan"},
+      {name:"Foam Rolling",sets:"1",reps:"10 min",video:"https://www.youtube.com/results?search_query=foam+rolling+full+body+routine"},
+      {name:"Full Body Stretch",sets:"1",reps:"15 min",video:"https://www.youtube.com/results?search_query=full+body+stretching+routine+15+minutes"},
+      {name:"Stability Ball Core",sets:"2",reps:"10 min",video:"https://www.youtube.com/results?search_query=stability+ball+core+exercises+beginner"}
+    ],cooldown:"10 min savasana",duration:55,calories:280},
+    Thursday:{label:"HIIT + Core",color:"#e76f51",icon:"🔥",warmup:"10 min dynamic warmup",exercises:[
+      {name:"Kettlebell Circuit",sets:"4 rounds",reps:"45s on / 15s rest",video:"https://www.youtube.com/results?search_query=kettlebell+circuit+workout+intermediate"},
+      {name:"Plyo Box Step-Ups",sets:"4",reps:"12 each leg",video:"https://www.youtube.com/results?search_query=box+step+up+exercise+proper+form"},
+      {name:"TRX Plank",sets:"3",reps:"35s hold",video:"https://www.youtube.com/results?search_query=TRX+plank+core+tutorial"},
+      {name:"Stability Ball Crunch",sets:"3",reps:"20 reps",video:"https://www.youtube.com/results?search_query=stability+ball+crunch+proper+form"},
+      {name:"Slam Ball Russian Twist",sets:"4",reps:"20 reps",video:"https://www.youtube.com/results?search_query=russian+twist+medicine+ball+core"},
+      {name:"Resistance Band Pallof Press",sets:"3",reps:"12 each side",video:"https://www.youtube.com/results?search_query=pallof+press+resistance+band+anti+rotation"}
+    ],cooldown:"10 min stretch — hip flexors",duration:65,calories:490},
+    Friday:{label:"Cardio + Pool",color:"#6a4c93",icon:"🚴",warmup:"10 min easy warm-up",exercises:[
+      {name:"Elliptical Intervals",sets:"1",reps:"35 min — hard intervals",video:"https://www.youtube.com/results?search_query=elliptical+interval+training+workout"},
+      {name:"Pool HIIT",sets:"1",reps:"20 min",video:"https://www.youtube.com/results?search_query=pool+HIIT+workout+water+resistance"},
+      {name:"Pull-Up Bar Dead Hangs",sets:"3",reps:"30s hold",video:"https://www.youtube.com/results?search_query=dead+hang+pull+up+bar+spine+decompression"}
+    ],cooldown:"15 min full stretch + foam roll",duration:70,calories:560},
+    Saturday:{label:"Outdoor + Pool Activity",color:"#f4a261",icon:"🎾",warmup:"5 min dynamic warmup",exercises:[
+      {name:"Pickleball",sets:"—",reps:"60-90 min",video:"https://www.youtube.com/results?search_query=pickleball+beginner+technique+tips"},
+      {name:"Aqua Dumbbell Circuit",sets:"—",reps:"30 min",video:"https://www.youtube.com/results?search_query=aqua+dumbbell+workout+pool+strength"},
+      {name:"Mountain Biking",sets:"—",reps:"45-60 min",video:"https://www.youtube.com/results?search_query=mountain+biking+beginner+tips"}
+    ],cooldown:"10 min stretch",duration:80,calories:540},
+    Sunday:{label:"Full Rest",color:"#adb5bd",icon:"😴",warmup:"",exercises:[
+      {name:"Complete Rest",sets:"—",reps:"—",video:""},
+      {name:"Optional: Light Walk",sets:"—",reps:"20-30 min",video:""}
+    ],cooldown:"",duration:0,calories:0}
+  },
+  4: { // Week 4 — Peak
+    label: "Week 4 — Peak Week",
+    Monday:{label:"HIIT + Boxing",color:"#e63946",icon:"🥊",warmup:"10 min dynamic stretching",exercises:[
+      {name:"Heavy Bag Intervals",sets:"8 rounds",reps:"40s hard / 20s rest",video:"https://www.youtube.com/results?search_query=heavy+bag+boxing+workout+advanced"},
+      {name:"Plyo Box Jumps",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=plyo+box+jump+proper+form"},
+      {name:"Kettlebell Swings",sets:"5",reps:"20 reps",video:"https://www.youtube.com/results?search_query=kettlebell+swing+proper+form+hip+hinge"},
+      {name:"Slam Ball Slams",sets:"4",reps:"15 reps",video:"https://www.youtube.com/results?search_query=slam+ball+overhead+slam+technique"},
+      {name:"TRX Rows",sets:"4",reps:"15 reps",video:"https://www.youtube.com/results?search_query=TRX+row+proper+form+tutorial"},
+      {name:"Push-Ups",sets:"3",reps:"25 reps",video:"https://www.youtube.com/results?search_query=push+up+proper+form+beginner"}
+    ],cooldown:"10 min foam roll + stretch",duration:70,calories:560},
+    Tuesday:{label:"Strength + Pool",color:"#457b9d",icon:"💪",warmup:"10 min light stretch",exercises:[
+      {name:"Aqua Jog",sets:"1",reps:"20 min warm-up",video:"https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout"},
+      {name:"Dumbbell Goblet Squat",sets:"4",reps:"15 reps @ 35 lbs",video:"https://www.youtube.com/results?search_query=goblet+squat+dumbbell+form+tutorial"},
+      {name:"Dumbbell Romanian Deadlift",sets:"4",reps:"12 reps",video:"https://www.youtube.com/results?search_query=dumbbell+romanian+deadlift+form"},
+      {name:"Dumbbell Chest Press",sets:"4",reps:"12 reps @ 45 lbs",video:"https://www.youtube.com/results?search_query=dumbbell+chest+press+proper+form"},
+      {name:"TRX Row",sets:"4",reps:"15 reps",video:"https://www.youtube.com/results?search_query=TRX+row+tutorial"},
+      {name:"Aqua Leg Circuit",sets:"3",reps:"15 each",video:"https://www.youtube.com/results?search_query=aqua+ankle+cuff+leg+workout+pool"}
+    ],cooldown:"10 min full body stretch",duration:75,calories:490},
+    Wednesday:{label:"Active Recovery + Pool",color:"#2a9d8f",icon:"🧘",warmup:"5 min easy swim",exercises:[
+      {name:"Lap Swimming",sets:"1",reps:"35 min",video:"https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan"},
+      {name:"Foam Rolling",sets:"1",reps:"12 min",video:"https://www.youtube.com/results?search_query=foam+rolling+full+body+routine"},
+      {name:"Full Body Stretch",sets:"1",reps:"15 min",video:"https://www.youtube.com/results?search_query=full+body+stretching+routine+15+minutes"}
+    ],cooldown:"10 min savasana",duration:60,calories:320},
+    Thursday:{label:"HIIT + Core",color:"#e76f51",icon:"🔥",warmup:"10 min dynamic warmup",exercises:[
+      {name:"Kettlebell Circuit",sets:"5 rounds",reps:"45s on / 15s rest",video:"https://www.youtube.com/results?search_query=kettlebell+circuit+workout+advanced"},
+      {name:"Plyo Box Step-Ups",sets:"4",reps:"15 each leg",video:"https://www.youtube.com/results?search_query=box+step+up+exercise+proper+form"},
+      {name:"TRX Plank",sets:"4",reps:"40s hold",video:"https://www.youtube.com/results?search_query=TRX+plank+core+tutorial"},
+      {name:"Stability Ball Crunch",sets:"4",reps:"20 reps",video:"https://www.youtube.com/results?search_query=stability+ball+crunch+proper+form"},
+      {name:"Slam Ball Russian Twist",sets:"4",reps:"24 reps",video:"https://www.youtube.com/results?search_query=russian+twist+medicine+ball+core"},
+      {name:"Resistance Band Pallof Press",sets:"4",reps:"12 each side",video:"https://www.youtube.com/results?search_query=pallof+press+resistance+band+anti+rotation"}
+    ],cooldown:"10 min stretch — hip flexors",duration:70,calories:520},
+    Friday:{label:"Cardio + Pool",color:"#6a4c93",icon:"🚴",warmup:"10 min easy warm-up",exercises:[
+      {name:"Elliptical Intervals",sets:"1",reps:"40 min — peak intensity",video:"https://www.youtube.com/results?search_query=elliptical+interval+training+advanced+workout"},
+      {name:"Pool HIIT",sets:"1",reps:"25 min",video:"https://www.youtube.com/results?search_query=pool+HIIT+workout+water+resistance"},
+      {name:"Pull-Up Bar Dead Hangs",sets:"4",reps:"30s hold",video:"https://www.youtube.com/results?search_query=dead+hang+pull+up+bar+spine+decompression"}
+    ],cooldown:"15 min full stretch + foam roll",duration:75,calories:600},
+    Saturday:{label:"Outdoor + Pool Activity",color:"#f4a261",icon:"🎾",warmup:"5 min dynamic warmup",exercises:[
+      {name:"Pickleball",sets:"—",reps:"90 min",video:"https://www.youtube.com/results?search_query=pickleball+beginner+technique+tips"},
+      {name:"Full Body AquaStrong",sets:"—",reps:"45 min",video:"https://www.youtube.com/results?search_query=aqua+fitness+full+body+pool+workout"},
+      {name:"Mountain Biking",sets:"—",reps:"60 min",video:"https://www.youtube.com/results?search_query=mountain+biking+beginner+tips"}
+    ],cooldown:"10 min stretch",duration:90,calories:600},
+    Sunday:{label:"Full Rest",color:"#adb5bd",icon:"😴",warmup:"",exercises:[
+      {name:"Complete Rest",sets:"—",reps:"—",video:""},
+      {name:"Optional: Light Walk",sets:"—",reps:"20-30 min",video:""}
+    ],cooldown:"",duration:0,calories:0}
+  },
+  5: { // Week 5 — Deload
+    label: "Week 5 — Deload & Recovery",
+    Monday:{label:"Light HIIT + Boxing",color:"#e63946",icon:"🥊",warmup:"10 min dynamic stretching",exercises:[
+      {name:"Heavy Bag — Light Work",sets:"5 rounds",reps:"30s moderate / 30s rest",video:"https://www.youtube.com/results?search_query=heavy+bag+boxing+workout+beginner"},
+      {name:"Kettlebell Swings",sets:"3",reps:"15 reps — lighter weight",video:"https://www.youtube.com/results?search_query=kettlebell+swing+proper+form+hip+hinge"},
+      {name:"TRX Rows",sets:"3",reps:"10 reps",video:"https://www.youtube.com/results?search_query=TRX+row+proper+form+tutorial"},
+      {name:"Push-Ups",sets:"2",reps:"15 reps",video:"https://www.youtube.com/results?search_query=push+up+proper+form+beginner"}
+    ],cooldown:"15 min foam roll + full stretch",duration:45,calories:380},
+    Tuesday:{label:"Light Strength + Pool",color:"#457b9d",icon:"💪",warmup:"10 min easy walk",exercises:[
+      {name:"Lap Swimming or Elliptical",sets:"1",reps:"30 min easy",video:"https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan"},
+      {name:"Dumbbell Goblet Squat",sets:"3",reps:"10 reps — lighter",video:"https://www.youtube.com/results?search_query=goblet+squat+dumbbell+form+tutorial"},
+      {name:"Dumbbell Chest Press",sets:"3",reps:"10 reps — lighter",video:"https://www.youtube.com/results?search_query=dumbbell+chest+press+proper+form"},
+      {name:"TRX Row",sets:"3",reps:"10 reps",video:"https://www.youtube.com/results?search_query=TRX+row+tutorial"}
+    ],cooldown:"15 min full body stretch",duration:50,calories:360},
+    Wednesday:{label:"Active Recovery",color:"#2a9d8f",icon:"🧘",warmup:"5 min easy walk",exercises:[
+      {name:"Lap Swimming",sets:"1",reps:"30 min easy",video:"https://www.youtube.com/results?search_query=beginner+lap+swimming+workout+plan"},
+      {name:"Full Body Foam Roll",sets:"1",reps:"15 min",video:"https://www.youtube.com/results?search_query=foam+rolling+full+body+routine"},
+      {name:"Full Body Stretch",sets:"1",reps:"20 min",video:"https://www.youtube.com/results?search_query=full+body+stretching+routine+15+minutes"}
+    ],cooldown:"10 min savasana",duration:60,calories:220},
+    Thursday:{label:"Light Core",color:"#e76f51",icon:"🔥",warmup:"10 min dynamic warmup",exercises:[
+      {name:"Kettlebell Circuit — Light",sets:"3 rounds",reps:"30s on / 30s rest",video:"https://www.youtube.com/results?search_query=kettlebell+circuit+workout+beginner"},
+      {name:"TRX Plank",sets:"3",reps:"30s hold",video:"https://www.youtube.com/results?search_query=TRX+plank+core+tutorial"},
+      {name:"Stability Ball Core",sets:"3",reps:"15 reps",video:"https://www.youtube.com/results?search_query=stability+ball+crunch+proper+form"},
+      {name:"Resistance Band Pallof Press",sets:"3",reps:"10 each side",video:"https://www.youtube.com/results?search_query=pallof+press+resistance+band+anti+rotation"}
+    ],cooldown:"15 min stretch",duration:45,calories:350},
+    Friday:{label:"Easy Cardio",color:"#6a4c93",icon:"🚴",warmup:"10 min easy warm-up",exercises:[
+      {name:"Elliptical Easy Pace",sets:"1",reps:"40 min — Zone 2 only",video:"https://www.youtube.com/results?search_query=elliptical+zone+2+cardio+workout"},
+      {name:"Pull-Up Bar Dead Hangs",sets:"3",reps:"25s hold",video:"https://www.youtube.com/results?search_query=dead+hang+pull+up+bar+spine+decompression"}
+    ],cooldown:"15 min full stretch",duration:55,calories:420},
+    Saturday:{label:"Outdoor + Pool Fun",color:"#f4a261",icon:"🎾",warmup:"5 min dynamic warmup",exercises:[
+      {name:"Pickleball",sets:"—",reps:"60 min",video:"https://www.youtube.com/results?search_query=pickleball+beginner+technique+tips"},
+      {name:"Easy Swim / Pool Walk",sets:"—",reps:"30 min",video:"https://www.youtube.com/results?search_query=aqua+jogging+pool+cardio+workout"}
+    ],cooldown:"10 min stretch",duration:70,calories:420},
+    Sunday:{label:"Full Rest",color:"#adb5bd",icon:"😴",warmup:"",exercises:[
+      {name:"Complete Rest",sets:"—",reps:"—",video:""},
+      {name:"Optional: Light Walk",sets:"—",reps:"20-30 min",video:""}
+    ],cooldown:"",duration:0,calories:0}
+  }
+};
+
+const QUICK_FOODS=[
+  {name:"Eggs (2)",cal:140,protein:12},{name:"Greek Yogurt",cal:130,protein:17},{name:"Chicken Breast",cal:165,protein:31},
+  {name:"Protein Shake",cal:150,protein:25},{name:"Oatmeal",cal:150,protein:5},{name:"Banana",cal:105,protein:1},
+  {name:"Almonds (1oz)",cal:164,protein:6},{name:"Salmon (4oz)",cal:200,protein:28},{name:"Turkey Sandwich",cal:350,protein:28},
+  {name:"Cottage Cheese",cal:110,protein:14},{name:"Rice & Chicken",cal:400,protein:35},{name:"Protein Bar",cal:200,protein:20},
+  {name:"Tuna Can",cal:130,protein:28},{name:"Sweet Potato",cal:130,protein:3},{name:"Steak (6oz)",cal:420,protein:42}
+];
+
+// ============================================================
+// STATE (localStorage — persists on hosted URL)
+// ============================================================
+let weightLog=JSON.parse(localStorage.getItem("wl")||'[{"date":"2026-04-14","weight":208}]');
+let completedWorkouts=JSON.parse(localStorage.getItem("cw")||"{}");
+let sessionLogs=JSON.parse(localStorage.getItem("sl")||"{}");
+let exerciseNotes=JSON.parse(localStorage.getItem("en")||"{}");
+let bpLog=JSON.parse(localStorage.getItem("bp")||"[]");
+let foodLog=JSON.parse(localStorage.getItem("fl")||"{}");
+let sleepLog=JSON.parse(localStorage.getItem("zz")||"{}"); // {date: hours}
+let selectedDate=todayStr();
+let selectedWeek=getCurrentMayWeek();
+let selectedDay=dayNameFromDate(selectedDate);
+let audioCtx=null;
+let timerTotal=60,timerRemaining=60,timerRunning=false,timerInterval=null;
+
+function save(){
+  localStorage.setItem("wl",JSON.stringify(weightLog));
+  localStorage.setItem("cw",JSON.stringify(completedWorkouts));
+  localStorage.setItem("sl",JSON.stringify(sessionLogs));
+  localStorage.setItem("en",JSON.stringify(exerciseNotes));
+  localStorage.setItem("bp",JSON.stringify(bpLog));
+  localStorage.setItem("fl",JSON.stringify(foodLog));
+  localStorage.setItem("zz",JSON.stringify(sleepLog));
+}
+
+// ============================================================
+// DATE & WEEK HELPERS
+// ============================================================
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function dateStr(daysAgo){const d=new Date();d.setDate(d.getDate()-daysAgo);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function futureDateStr(daysAhead){const d=new Date();d.setDate(d.getDate()+daysAhead);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function dayNameFromDate(ds){const d=new Date(ds+"T12:00:00");return DAYS[d.getDay()===0?6:d.getDay()-1];}
+function getTodayName(){return dayNameFromDate(todayStr());}
+function calcBMI(w){return(w/(HEIGHT*HEIGHT)*703).toFixed(1);}
+function formatDate(ds){if(ds===todayStr())return"Today";if(ds===dateStr(1))return"Yesterday";if(ds===futureDateStr(1))return"Tomorrow";const d=new Date(ds+"T12:00:00");return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+function getBPCat(s,d){if(s<120&&d<80)return{label:"Normal",color:"#2a9d8f"};if(s<130&&d<80)return{label:"Elevated",color:"#f4a261"};if(s<140||d<90)return{label:"High Stage 1",color:"#e76f51"};return{label:"High Stage 2",color:"#e63946"};}
+function getPoolCountdown(){return Math.max(0,Math.ceil((new Date(POOL_OPEN_DATE)-new Date())/86400000));}
+function isPoolOpen(){return new Date()>=new Date(POOL_OPEN_DATE);}
+
+function getCurrentMayWeek(){
+  const today=new Date();
+  const may1=new Date("2026-05-01");
+  if(today<may1)return 1;
+  const diff=Math.floor((today-may1)/(7*86400000));
+  return Math.min(5,diff+1);
+}
+
+function getMayWeekDates(week){
+  // Week 1 starts May 1, Week 2 starts May 8, etc.
+  const may1=new Date("2026-05-01");
+  const weekStart=new Date(may1);
+  weekStart.setDate(may1.getDate()+(week-1)*7);
+  const dates=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart);
+    d.setDate(weekStart.getDate()+i);
+    dates.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"));
+  }
+  return dates;
+}
+
+// ============================================================
+// SOUND
+// ============================================================
+function playBeep(freq,dur,delay){setTimeout(()=>{try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();const osc=audioCtx.createOscillator();const gain=audioCtx.createGain();osc.connect(gain);gain.connect(audioCtx.destination);osc.frequency.value=freq;osc.type="sine";gain.gain.setValueAtTime(0.4,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);osc.start(audioCtx.currentTime);osc.stop(audioCtx.currentTime+dur);}catch(e){}},delay||0);}
+function playTimerDone(){playBeep(660,0.2,0);playBeep(880,0.2,250);playBeep(1100,0.5,500);}
+
+// ============================================================
+// TIMER
+// ============================================================
+function showTimerWith(secs){document.getElementById("timerBar").style.display="block";setTimer(secs);startTimer();window.scrollTo({top:0,behavior:"smooth"});}
+function hideTimer(){clearInterval(timerInterval);timerRunning=false;document.getElementById("timerBar").style.display="none";}
+function setTimer(secs){clearInterval(timerInterval);timerRunning=false;timerTotal=secs;timerRemaining=secs;document.getElementById("timerStartBtn").textContent="▶ Start";document.getElementById("timerStartBtn").style.background="#2a9d8f";document.getElementById("timerDisplay").style.color="#f0ece4";document.getElementById("timerPhase").textContent="";updateTimerDisplay();}
+function startTimer(){
+  try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById("timerStartBtn").textContent="▶ Resume";document.getElementById("timerStartBtn").style.background="#2a9d8f";return;}
+  if(timerRemaining<=0)timerRemaining=timerTotal;
+  timerRunning=true;document.getElementById("timerStartBtn").textContent="⏸ Pause";document.getElementById("timerStartBtn").style.background="#e76f51";document.getElementById("timerPhase").textContent="🔥 Resting...";
+  timerInterval=setInterval(()=>{timerRemaining--;updateTimerDisplay();
+    if(timerRemaining<=3&&timerRemaining>0)playBeep(440,0.15);
+    if(timerRemaining<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById("timerStartBtn").textContent="▶ Start";document.getElementById("timerStartBtn").style.background="#2a9d8f";document.getElementById("timerDisplay").style.color="#2a9d8f";document.getElementById("timerPhase").textContent="✅ Rest done — go!";playTimerDone();if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}
+  },1000);
+}
+function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerRemaining=timerTotal;document.getElementById("timerStartBtn").textContent="▶ Start";document.getElementById("timerStartBtn").style.background="#2a9d8f";document.getElementById("timerDisplay").style.color="#f0ece4";document.getElementById("timerPhase").textContent="";updateTimerDisplay();}
+function updateTimerDisplay(){const m=Math.floor(timerRemaining/60),s=timerRemaining%60;document.getElementById("timerDisplay").textContent=m+":"+(s<10?"0":"")+s;const pct=timerTotal>0?(timerRemaining/timerTotal)*100:100;document.getElementById("timerProgress").style.width=pct+"%";if(timerRemaining<=5&&timerRemaining>0){document.getElementById("timerDisplay").style.color="#e63946";document.getElementById("timerPhase").textContent="⚡ Almost done!";}}
+
+// ============================================================
+// HEADER
+// ============================================================
+function updateHeader(){
+  const cw=weightLog[weightLog.length-1]?.weight||INITIAL_WEIGHT;
+  const lost=INITIAL_WEIGHT-cw,rem=cw-GOAL_WEIGHT;
+  const pct=Math.min(100,Math.max(0,(lost/(INITIAL_WEIGHT-GOAL_WEIGHT))*100));
+  document.getElementById("currentWeightDisplay").innerHTML=cw+'<span style="font-size:15px;">lb</span>';
+  document.getElementById("lostLabel").textContent="Lost: "+(lost>0?lost.toFixed(1):0)+" lbs";
+  document.getElementById("remainLabel").textContent=rem.toFixed(1)+" lbs to go";
+  document.getElementById("progressBar").style.width=Math.max(2,pct)+"%";
+  document.getElementById("progressLabel").textContent=pct.toFixed(1)+"% to goal";
+  document.getElementById("bmiDisplay").textContent=calcBMI(cw);
+  document.getElementById("sessionsDisplay").textContent=Object.values(completedWorkouts).filter(Boolean).length;
+
+  // Sleep on dashboard
+  const todaySleep=sleepLog[dateStr(1)]||sleepLog[todayStr()]||null;
+  document.getElementById("sleepDisplay").textContent=todaySleep?todaySleep+"h":"—";
+
+  updatePoolBanner();
+  updateBPSummary();
+}
+
+function updatePoolBanner(){
+  const days=getPoolCountdown();
+  const banner=document.getElementById("poolBanner");
+  const label=document.getElementById("poolBannerLabel");
+  const text=document.getElementById("poolDays");
+  if(isPoolOpen()){
+    label.textContent="🏊 POOL IS OPEN!";
+    text.textContent="Time to hit the water — check Pool tab for workouts";
+    banner.style.background="linear-gradient(90deg,#006994,#2a9d8f)";
+  } else {
+    label.textContent="POOL OPENS IN";
+    text.textContent=days+" days — workouts unlock May 14!";
+  }
+}
+
+function updateBPSummary(){
+  const el=document.getElementById("bpSummary");
+  if(bpLog.length===0){el.style.display="none";return;}
+  const latest=bpLog[bpLog.length-1];const cat=getBPCat(latest.systolic,latest.diastolic);
+  el.style.display="block";el.style.border="1px solid "+cat.color+"40";
+  el.innerHTML=`<div style="font-size:11px;letter-spacing:3px;color:${cat.color};text-transform:uppercase;margin-bottom:5px;">❤️ Latest Blood Pressure</div><div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:26px;font-weight:bold;">${latest.systolic}/${latest.diastolic} <span style="font-size:13px;color:#666;">mmHg</span></div><div style="background:${cat.color}20;border:1px solid ${cat.color}50;border-radius:8px;padding:5px 10px;font-size:13px;color:${cat.color};font-weight:bold;">${cat.label}</div></div><div style="font-size:12px;color:#888;margin-top:4px;">${formatDate(latest.date)}${latest.time?" · "+latest.time:""}${latest.note?" · "+latest.note:""}</div>`;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const today=getTodayName();
+  // Get today's workout from current May week or fallback
+  const weekPlan=MAY_PROGRAM[selectedWeek]||MAY_PROGRAM[1];
+  const w=weekPlan[today];
+  document.getElementById("todayLabel").textContent=today;
+  const tc=document.getElementById("todayCard");
+  tc.style.cssText=`background:linear-gradient(135deg,${w.color}20,#1a1a1a);border:1px solid ${w.color}40;border-radius:14px;padding:18px;margin-bottom:18px;`;
+  tc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:30px;margin-bottom:5px;">${w.icon}</div><div style="font-size:19px;font-weight:bold;">${w.label}</div><div style="font-size:13px;color:#aaa;margin-top:4px;">${w.duration>0?w.duration+" min · ~"+w.calories+" cal":"Rest & Recover"}</div></div><button onclick="selectedDate=todayStr();selectedDay=getTodayName();showTab('workouts');" style="background:${w.color};color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:bold;cursor:pointer;">Log →</button></div>`;
+
+  const wr=document.getElementById("weekRow");wr.innerHTML="";
+  DAYS.forEach(day=>{
+    let matchDate=null;for(let i=0;i<8;i++){const ds=dateStr(i);if(dayNameFromDate(ds)===day){matchDate=ds;break;}}
+    const done=matchDate&&completedWorkouts[matchDate];const isToday=day===today;
+    const dw=MAY_PROGRAM[selectedWeek]||MAY_PROGRAM[1];
+    const dp=dw[day];
+    const d=document.createElement("div");
+    d.style.cssText=`flex:1;background:${done?dp.color:"#1a1a1a"};border:2px solid ${isToday?"#f0ece4":"#222"};border-radius:10px;padding:9px 2px;text-align:center;cursor:pointer;`;
+    d.innerHTML=`<div style="font-size:14px;">${dp.icon}</div><div style="font-size:9px;color:${done?"#fff":"#555"};margin-top:3px;">${day.slice(0,2)}</div>${done?'<div style="font-size:9px;color:#fff;">✓</div>':""}`;
+    d.onclick=()=>{selectedDate=matchDate||todayStr();selectedDay=day;showTab("workouts");};
+    wr.appendChild(d);
+  });
+}
+
+// ============================================================
+// WORKOUTS
+// ============================================================
+function renderWeekSelector(){
+  const ws=document.getElementById("weekSelector");ws.innerHTML="";
+  for(let w=1;w<=5;w++){
+    const active=w===selectedWeek;
+    const btn=document.createElement("button");
+    const prog=MAY_PROGRAM[w];
+    btn.style.cssText=`background:${active?"#e63946":"#111"};border:1px solid ${active?"#e63946":"#333"};border-radius:8px;padding:9px 14px;color:${active?"#fff":"#aaa"};white-space:nowrap;font-size:13px;font-weight:${active?"bold":"normal"};flex-shrink:0;cursor:pointer;`;
+    btn.innerHTML=`<div style="font-weight:bold;">Wk ${w}</div><div style="font-size:11px;margin-top:1px;">${prog.label.split("—")[1]?.trim()||""}</div>`;
+    btn.onclick=()=>{selectedWeek=w;renderWeekSelector();renderDatePicker();renderWorkoutSection();};
+    ws.appendChild(btn);
+  }
+}
+
+function renderDatePicker(){
+  const dp=document.getElementById("datePicker");dp.innerHTML="";
+  const weekDates=getMayWeekDates(selectedWeek);
+
+  weekDates.forEach((ds,idx)=>{
+    const dn=DAYS[idx];const sel=ds===selectedDate;const done=completedWorkouts[ds];const hasLog=sessionLogs[ds];
+    const isToday=ds===todayStr();const isPast=ds<todayStr();const isFuture=ds>todayStr();
+    const btn=document.createElement("button");
+    btn.style.cssText=`background:${sel?"#e63946":done?"#051505":isToday?"#1a0a00":"#111"};border:2px solid ${sel?"#e63946":isToday?"#f4a261":"#2a2a2a"};border-radius:10px;padding:9px 11px;color:${sel?"#fff":isToday?"#f4a261":isPast?"#888":"#aaa"};white-space:nowrap;font-size:13px;font-weight:${sel||isToday?"bold":"normal"};flex-shrink:0;text-align:center;min-width:58px;cursor:pointer;opacity:${isFuture&&!isToday?0.75:1};`;
+    const label=isToday?"Today":formatDate(ds);
+    btn.innerHTML=`<div style="font-weight:bold;">${dn.slice(0,3)}</div><div style="font-size:11px;margin-top:2px;">${label}</div><div style="font-size:10px;margin-top:2px;color:${done?"#2a9d8f":hasLog?"#555":"transparent"}">${done?"✓":hasLog?"📝":"·"}</div>`;
+    btn.onclick=()=>{selectedDate=ds;selectedDay=dn;renderDatePicker();renderWorkoutSection();};
+    dp.appendChild(btn);
+  });
+}
+
+function renderWorkoutSection(){
+  const weekPlan=MAY_PROGRAM[selectedWeek]||MAY_PROGRAM[1];
+  const w=weekPlan[selectedDay];
+  if(!w)return;
+  const done=completedWorkouts[selectedDate];
+  const isPast=selectedDate<todayStr();
+  const isFuture=selectedDate>todayStr();
+
+  document.getElementById("workoutHeader").style.cssText=`background:linear-gradient(135deg,${w.color}20,#0d0d0d);border:1px solid ${w.color}40;border-radius:14px;padding:18px;`;
+  document.getElementById("workoutHeader").innerHTML=`
+    <div style="display:flex;align-items:center;gap:13px;">
+      <div style="font-size:34px;">${w.icon}</div>
+      <div>
+        <div style="font-size:11px;letter-spacing:2px;color:${w.color};text-transform:uppercase;margin-bottom:3px;">${MAY_PROGRAM[selectedWeek].label}</div>
+        <div style="font-size:20px;font-weight:bold;">${w.label}</div>
+        <div style="font-size:14px;color:#aaa;margin-top:3px;">${w.duration>0?w.duration+" min · ~"+w.calories+" cal":"Rest & Recover"}</div>
+        <div style="font-size:13px;color:${isPast?"#f4a261":isFuture?"#6a4c93":"#2a9d8f"};margin-top:3px;">${isPast?"📅 Logging past session":isFuture?"👀 Preview — upcoming workout":"📅 Today's workout"}</div>
+      </div>
+    </div>
+    ${w.warmup?`<div style="margin-top:13px;padding-top:13px;border-top:1px solid #222;"><div style="font-size:11px;color:#2a9d8f;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Warm-Up</div><div style="font-size:15px;color:#ccc;">${w.warmup}</div></div>`:""}`;
+
+  const el=document.getElementById("exerciseList");el.innerHTML="";
+  w.exercises.forEach((ex,i)=>{
+    const noteKey=`${selectedDate}-${selectedDay}-${i}`;
+    const savedNote=exerciseNotes[noteKey]||"";
+    const card=document.createElement("div");
+    card.className="ex-card";
+    card.innerHTML=`
+      <div class="ex-header">
+        <div style="font-size:17px;font-weight:bold;color:#f0ece4;">${ex.name}</div>
+        <div style="font-size:14px;color:#777;margin-top:3px;">${ex.sets} sets · ${ex.reps}</div>
+        ${ex.video?`<a href="${ex.video}" target="_blank" class="video-btn">▶ Watch Exercise Video</a>`:""}
+      </div>
+      <div class="ex-notes">
+        <div style="font-size:12px;color:#2a9d8f;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">📝 Your Notes</div>
+        <textarea data-key="${noteKey}" placeholder="What did you do? e.g. Used 35 lbs · 3 sets · felt strong · modified to seated" style="width:100%;background:#0d0d0d;border:1px solid #2a9d8f40;border-radius:8px;padding:11px;color:#f0ece4;font-size:16px;line-height:1.5;resize:none;min-height:68px;">${savedNote}</textarea>
+        <div style="display:flex;gap:7px;margin-top:9px;align-items:center;">
+          <button onclick="saveExNoteFromBtn(this)" data-key="${noteKey}" style="flex:1;background:#2a9d8f;border:none;border-radius:8px;padding:11px;color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">💾 Save</button>
+          <button onclick="showTimerWith(60)" style="background:#1e1e1e;border:1px solid #333;border-radius:8px;padding:11px 13px;color:#aaa;font-size:15px;cursor:pointer;">⏱️</button>
+          <span class="saved-indicator" style="font-size:12px;color:#2a9d8f;display:none;">✓ Saved</span>
+        </div>
+      </div>`;
+    el.appendChild(card);
+  });
+
+  if(w.cooldown){document.getElementById("cooldownBlock").style.display="block";document.getElementById("cooldownText").textContent=w.cooldown;}
+  else document.getElementById("cooldownBlock").style.display="none";
+
+  document.getElementById("sessionLog").value=sessionLogs[selectedDate]||"";
+  updateMarkDoneBtn();
+}
+
+function saveExNoteFromBtn(btn){
+  const key=btn.getAttribute("data-key");
+  const ta=btn.closest(".ex-notes").querySelector("textarea");
+  if(ta&&key){
+    exerciseNotes[key]=ta.value.trim();save();
+    const ind=btn.closest(".ex-notes").querySelector(".saved-indicator");
+    if(ind){ind.style.display="inline";setTimeout(()=>ind.style.display="none",2000);}
+  }
+}
+
+function saveSessionLog(){
+  const ta=document.getElementById("sessionLog");
+  if(!ta.value.trim())return;
+  sessionLogs[selectedDate]=ta.value.trim();save();
+  const msg=document.getElementById("sessionSavedMsg");msg.style.display="block";
+  setTimeout(()=>msg.style.display="none",2000);
+}
+
+function updateMarkDoneBtn(){
+  const btn=document.getElementById("markDoneBtn");if(!btn)return;
+  const done=completedWorkouts[selectedDate];
+  btn.style.background=done?"#2a9d8f":"#e63946";
+  btn.textContent=done?"✓ Day Complete — tap to undo":"Mark Day Complete";
+}
+
+function toggleWorkoutDone(){
+  completedWorkouts[selectedDate]=!completedWorkouts[selectedDate];
+  save();updateMarkDoneBtn();updateHeader();renderDashboard();renderDatePicker();
+}
+
+// ============================================================
+// WEIGHT
+// ============================================================
+function logWeight(){
+  const inp=document.getElementById("weightInput");const w=parseFloat(inp.value);
+  if(!w||w<100||w>400)return;
+  weightLog.push({date:todayStr(),weight:w});inp.value="";
+  save();updateHeader();renderWeight();renderStats();
+}
+
+function renderWeight(){
+  const list=document.getElementById("weightList");list.innerHTML="";
+  [...weightLog].reverse().forEach(entry=>{
+    const d=document.createElement("div");
+    d.style.cssText="display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border:1px solid #222;border-radius:12px;padding:13px 17px;margin-bottom:9px;";
+    d.innerHTML=`<div style="font-size:14px;color:#888;">${entry.date} <span style="color:#555;font-size:12px;">(${dayNameFromDate(entry.date)})</span></div><div style="font-size:20px;font-weight:bold;color:#e63946;">${entry.weight} lbs</div>`;
+    list.appendChild(d);
+  });
+  drawWeightChart();
+}
+
+function drawWeightChart(){
+  const svg=document.getElementById("weightChart");svg.innerHTML="";
+  if(weightLog.length<2)return;
+  const minW=Math.min(...weightLog.map(e=>e.weight))-3;const maxW=Math.max(...weightLog.map(e=>e.weight))+3;
+  const toY=w=>110-((w-minW)/(maxW-minW))*100;const toX=i=>(i/Math.max(weightLog.length-1,1))*300;
+  const ns="http://www.w3.org/2000/svg";
+  const gl=document.createElementNS(ns,"line");gl.setAttribute("x1","0");gl.setAttribute("y1",toY(GOAL_WEIGHT));gl.setAttribute("x2","300");gl.setAttribute("y2",toY(GOAL_WEIGHT));gl.setAttribute("stroke","#2a9d8f");gl.setAttribute("stroke-width","1.5");gl.setAttribute("stroke-dasharray","5,5");gl.setAttribute("opacity","0.7");svg.appendChild(gl);
+  for(let i=1;i<weightLog.length;i++){const l=document.createElementNS(ns,"line");l.setAttribute("x1",toX(i-1));l.setAttribute("y1",toY(weightLog[i-1].weight));l.setAttribute("x2",toX(i));l.setAttribute("y2",toY(weightLog[i].weight));l.setAttribute("stroke","#e63946");l.setAttribute("stroke-width","2.5");svg.appendChild(l);}
+  weightLog.forEach((e,i)=>{const c=document.createElementNS(ns,"circle");c.setAttribute("cx",toX(i));c.setAttribute("cy",toY(e.weight));c.setAttribute("r","4.5");c.setAttribute("fill","#e63946");svg.appendChild(c);});
+}
+
+// ============================================================
+// BLOOD PRESSURE
+// ============================================================
+function logBP(){
+  const s=parseInt(document.getElementById("bpSystolic").value);const d=parseInt(document.getElementById("bpDiastolic").value);const note=document.getElementById("bpNote").value.trim();
+  if(!s||!d||s<60||s>250||d<40||d>150)return;
+  const now=new Date();
+  bpLog.push({date:todayStr(),time:now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),systolic:s,diastolic:d,note:note});
+  document.getElementById("bpSystolic").value="";document.getElementById("bpDiastolic").value="";document.getElementById("bpNote").value="";
+  save();updateHeader();renderBP();
+  const msg=document.getElementById("bpSavedMsg");msg.style.display="block";setTimeout(()=>msg.style.display="none",2500);
+}
+
+function renderBP(){
+  const list=document.getElementById("bpList");list.innerHTML="";
+  if(bpLog.length===0){list.innerHTML='<div style="text-align:center;color:#444;padding:30px;font-size:15px;">No readings yet — log your first one above</div>';drawBPChart();return;}
+  [...bpLog].reverse().forEach(entry=>{
+    const cat=getBPCat(entry.systolic,entry.diastolic);
+    const d=document.createElement("div");
+    d.style.cssText=`background:#1a1a1a;border:1px solid ${cat.color}25;border-radius:12px;padding:13px 17px;margin-bottom:9px;`;
+    d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:24px;font-weight:bold;">${entry.systolic}/${entry.diastolic} <span style="font-size:13px;color:#666;">mmHg</span></div><div style="font-size:12px;color:#888;margin-top:3px;">${formatDate(entry.date)}${entry.time?" · "+entry.time:""}${entry.note?" · "+entry.note:""}</div></div><div style="background:${cat.color}20;border:1px solid ${cat.color}50;border-radius:7px;padding:5px 9px;font-size:12px;color:${cat.color};font-weight:bold;margin-left:9px;flex-shrink:0;">${cat.label}</div></div>`;
+    list.appendChild(d);
+  });
+  drawBPChart();
+}
+
+function drawBPChart(){
+  const svg=document.getElementById("bpChart");svg.innerHTML="";
+  if(bpLog.length<2)return;
+  const allV=[...bpLog.map(e=>e.systolic),...bpLog.map(e=>e.diastolic),75,125];
+  const minV=Math.min(...allV)-5;const maxV=Math.max(...allV)+5;
+  const toY=v=>120-((v-minV)/(maxV-minV))*110;const toX=i=>(i/Math.max(bpLog.length-1,1))*300;
+  const ns="http://www.w3.org/2000/svg";
+  const tl=document.createElementNS(ns,"line");tl.setAttribute("x1","0");tl.setAttribute("y1",toY(120));tl.setAttribute("x2","300");tl.setAttribute("y2",toY(120));tl.setAttribute("stroke","#2a9d8f");tl.setAttribute("stroke-width","1");tl.setAttribute("stroke-dasharray","4,4");tl.setAttribute("opacity","0.6");svg.appendChild(tl);
+  for(let i=1;i<bpLog.length;i++){const l=document.createElementNS(ns,"line");l.setAttribute("x1",toX(i-1));l.setAttribute("y1",toY(bpLog[i-1].systolic));l.setAttribute("x2",toX(i));l.setAttribute("y2",toY(bpLog[i].systolic));l.setAttribute("stroke","#e63946");l.setAttribute("stroke-width","2.5");svg.appendChild(l);}
+  bpLog.forEach((e,i)=>{const c=document.createElementNS(ns,"circle");c.setAttribute("cx",toX(i));c.setAttribute("cy",toY(e.systolic));c.setAttribute("r","4");c.setAttribute("fill","#e63946");svg.appendChild(c);});
+  for(let i=1;i<bpLog.length;i++){const l=document.createElementNS(ns,"line");l.setAttribute("x1",toX(i-1));l.setAttribute("y1",toY(bpLog[i-1].diastolic));l.setAttribute("x2",toX(i));l.setAttribute("y2",toY(bpLog[i].diastolic));l.setAttribute("stroke","#457b9d");l.setAttribute("stroke-width","2.5");svg.appendChild(l);}
+  bpLog.forEach((e,i)=>{const c=document.createElementNS(ns,"circle");c.setAttribute("cx",toX(i));c.setAttribute("cy",toY(e.diastolic));c.setAttribute("r","4");c.setAttribute("fill","#457b9d");svg.appendChild(c);});
+}
+
+// ============================================================
+// SLEEP
+// ============================================================
+function logSleep(){
+  const h=parseFloat(document.getElementById("sleepHours").value);
+  if(!h||h<0||h>14)return;
+  sleepLog[dateStr(1)]=h; // logs for "last night"
+  document.getElementById("sleepHours").value="";
+  save();updateHeader();renderSleep();
+  const msg=document.getElementById("sleepSavedMsg");msg.style.display="block";setTimeout(()=>msg.style.display="none",2500);
+}
+
+function renderSleep(){
+  const entries=Object.entries(sleepLog).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+  if(entries.length>0){
+    const avg=(entries.reduce((s,[,h])=>s+h,0)/entries.length).toFixed(1);
+    const goalDays=entries.filter(([,h])=>h>=SLEEP_GOAL).length;
+    // streak
+    let streak=0;const today=new Date();
+    for(let i=0;i<entries.length;i++){const d=new Date(today);d.setDate(today.getDate()-i-1);const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");if(sleepLog[ds]>=SLEEP_GOAL)streak++;else break;}
+    document.getElementById("sleepAvg").textContent=avg+"h";
+    document.getElementById("sleepAvg").style.color=parseFloat(avg)>=SLEEP_GOAL?"#2a9d8f":"#e63946";
+    document.getElementById("sleepGoalDays").textContent=goalDays+"/"+entries.length;
+    document.getElementById("sleepStreak").textContent=streak+"d";
+  }
+
+  // Chart
+  const svg=document.getElementById("sleepChart");svg.innerHTML="";
+  if(entries.length>1){
+    const ns="http://www.w3.org/2000/svg";
+    const maxH=Math.max(...entries.map(([,h])=>h),SLEEP_GOAL)+1;
+    const minH=Math.max(0,Math.min(...entries.map(([,h])=>h))-1);
+    const toY=h=>100-((h-minH)/(maxH-minH))*90;
+    const toX=i=>(i/Math.max(entries.length-1,1))*300;
+    // Goal line
+    const gl=document.createElementNS(ns,"line");gl.setAttribute("x1","0");gl.setAttribute("y1",toY(SLEEP_GOAL));gl.setAttribute("x2","300");gl.setAttribute("y2",toY(SLEEP_GOAL));gl.setAttribute("stroke","#6a4c93");gl.setAttribute("stroke-width","1.5");gl.setAttribute("stroke-dasharray","5,5");gl.setAttribute("opacity","0.7");svg.appendChild(gl);
+    // Bars
+    entries.forEach(([,h],i)=>{
+      const color=h>=SLEEP_GOAL?"#2a9d8f":"#e63946";
+      const barH=Math.max(4,((h-minH)/(maxH-minH))*90);
+      const bar=document.createElementNS(ns,"rect");
+      const bw=Math.max(4,280/entries.length-4);
+      bar.setAttribute("x",toX(i)-bw/2);bar.setAttribute("y",toY(h));bar.setAttribute("width",bw);bar.setAttribute("height",barH);bar.setAttribute("fill",color);bar.setAttribute("rx","3");bar.setAttribute("opacity","0.8");svg.appendChild(bar);
+    });
+  }
+
+  // List
+  const list=document.getElementById("sleepList");list.innerHTML="";
+  [...entries].reverse().forEach(([date,hours])=>{
+    const onTarget=hours>=SLEEP_GOAL;
+    const d=document.createElement("div");
+    d.style.cssText=`display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border:1px solid ${onTarget?"#2a9d8f25":"#e6394625"};border-radius:12px;padding:13px 17px;margin-bottom:9px;`;
+    d.innerHTML=`<div><div style="font-size:14px;color:#888;">${date} <span style="color:#555;font-size:12px;">(${dayNameFromDate(date)})</span></div></div><div style="display:flex;align-items:center;gap:10px;"><div style="font-size:22px;font-weight:bold;color:${onTarget?"#2a9d8f":"#e63946"};">${hours}h</div><div style="font-size:13px;color:${onTarget?"#2a9d8f":"#e63946"};">${onTarget?"✓ Goal":"Below"}</div></div>`;
+    list.appendChild(d);
+  });
+  if(entries.length===0)list.innerHTML='<div style="text-align:center;color:#444;padding:30px;font-size:15px;">No sleep data yet — log last night above</div>';
+}
+
+// ============================================================
+// NUTRITION
+// ============================================================
+function initNutrition(){
+  const qf=document.getElementById("quickFoods");qf.innerHTML="";
+  QUICK_FOODS.forEach(food=>{
+    const btn=document.createElement("button");
+    btn.style.cssText="background:#111;border:1px solid #333;border-radius:8px;padding:9px 13px;color:#f0ece4;font-size:13px;cursor:pointer;";
+    btn.innerHTML=`<div style="font-weight:bold;">${food.name}</div><div style="font-size:11px;color:#888;margin-top:2px;">${food.cal} cal · ${food.protein}g protein</div>`;
+    btn.onclick=()=>addFood(food.name,food.cal,food.protein);
+    qf.appendChild(btn);
+  });
+}
+
+function addCustomFood(){
+  const name=document.getElementById("foodName").value.trim();
+  const cal=parseInt(document.getElementById("foodCal").value);
+  const protein=parseInt(document.getElementById("foodProtein").value)||0;
+  if(!name||!cal)return;
+  addFood(name,cal,protein);
+  document.getElementById("foodName").value="";document.getElementById("foodCal").value="";document.getElementById("foodProtein").value="";
+}
+
+function addFood(name,cal,protein){
+  const today=todayStr();
+  if(!foodLog[today])foodLog[today]=[];
+  foodLog[today].push({name,cal,protein,time:new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})});
+  save();renderNutrition();
+}
+
+function renderNutrition(){
+  const today=todayStr();const entries=foodLog[today]||[];
+  const totalCal=entries.reduce((s,e)=>s+e.cal,0);
+  const totalProtein=entries.reduce((s,e)=>s+e.protein,0);
+  const calPct=Math.min(100,(totalCal/CAL_GOAL)*100);
+  const proteinPct=Math.min(100,(totalProtein/PROTEIN_GOAL)*100);
+
+  document.getElementById("calConsumed").textContent=totalCal+" eaten";
+  document.getElementById("calRemaining").textContent=Math.max(0,CAL_GOAL-totalCal)+" left";
+  document.getElementById("proteinConsumed").textContent=totalProtein+"g eaten";
+  document.getElementById("proteinRemaining").textContent=Math.max(0,PROTEIN_GOAL-totalProtein)+"g left";
+  document.getElementById("calBar").style.width=calPct+"%";
+  document.getElementById("proteinBar").style.width=proteinPct+"%";
+  document.getElementById("calPct").textContent=Math.round(calPct)+"%";
+  document.getElementById("proteinPct").textContent=Math.round(proteinPct)+"%";
+
+  const fl=document.getElementById("foodLog");fl.innerHTML="";
+  if(entries.length===0){fl.innerHTML='<div style="text-align:center;color:#444;padding:25px;font-size:15px;">No food logged today yet</div>';return;}
+  [...entries].reverse().forEach((e,i)=>{
+    const d=document.createElement("div");
+    d.style.cssText="display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border:1px solid #222;border-radius:12px;padding:12px 16px;margin-bottom:9px;";
+    d.innerHTML=`<div><div style="font-size:15px;color:#f0ece4;">${e.name}</div><div style="font-size:12px;color:#888;margin-top:2px;">${e.time||""}</div></div><div style="text-align:right;"><div style="font-size:16px;font-weight:bold;color:#f4a261;">${e.cal} cal</div><div style="font-size:12px;color:#457b9d;">${e.protein}g protein</div></div>`;
+    fl.appendChild(d);
+  });
+}
+
+// ============================================================
+// POOL TAB
+// ============================================================
+function renderPool(){
+  const days=getPoolCountdown();
+  const card=document.getElementById("poolCountdownCard");
+  const text=document.getElementById("poolCountdownText");
+  if(isPoolOpen()){
+    card.style.background="linear-gradient(135deg,#006994,#2a9d8f)";
+    text.textContent="🎉 Pool is open! Time to get in the water!";
+  } else {
+    text.textContent=days+" days until pool opens (May 14)";
+  }
+}
+
+// ============================================================
+// STATS & EXPORT
+// ============================================================
+function renderStats(){
+  const cw=weightLog[weightLog.length-1]?.weight||INITIAL_WEIGHT;
+  const lost=INITIAL_WEIGHT-cw,rem=cw-GOAL_WEIGHT;
+  const pct=Math.min(100,Math.max(0,(lost/(INITIAL_WEIGHT-GOAL_WEIGHT))*100));
+  const latestBP=bpLog.length>0?bpLog[bpLog.length-1]:null;
+  const wc=Object.values(completedWorkouts).filter(Boolean).length;
+  const sleepEntries=Object.values(sleepLog);
+  const avgSleep=sleepEntries.length>0?(sleepEntries.reduce((a,b)=>a+b,0)/sleepEntries.length).toFixed(1):"—";
+
+  const items=[
+    {label:"Current Weight",value:cw+" lbs",color:"#e63946"},
+    {label:"Goal Weight",value:"185 lbs",color:"#2a9d8f"},
+    {label:"Pounds to Lose",value:rem.toFixed(1)+" lbs",color:"#f4a261"},
+    {label:"Progress",value:pct.toFixed(1)+"%",color:"#6a4c93"},
+    {label:"Height",value:"5'9\"",color:"#888"},
+    {label:"Current BMI",value:calcBMI(cw),color:"#457b9d"},
+    {label:"Goal BMI",value:calcBMI(GOAL_WEIGHT),color:"#2a9d8f"},
+    {label:"Latest BP",value:latestBP?`${latestBP.systolic}/${latestBP.diastolic} mmHg`:"Not logged",color:latestBP?getBPCat(latestBP.systolic,latestBP.diastolic).color:"#555"},
+    {label:"Avg Sleep",value:avgSleep+(avgSleep!=="—"?"h":""),color:parseFloat(avgSleep)>=SLEEP_GOAL?"#2a9d8f":"#e63946"},
+    {label:"Sessions Done",value:wc+" total",color:"#f4a261"},
+    {label:"Pool Opens In",value:isPoolOpen()?"Open now! 🎉":getPoolCountdown()+" days",color:"#006994"},
+    {label:"May Program",value:"Week "+selectedWeek+" of 5",color:"#e63946"},
+  ];
+  const sl=document.getElementById("statsList");sl.innerHTML="";
+  items.forEach(s=>{
+    const d=document.createElement("div");
+    d.style.cssText=`display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border:1px solid ${s.color}18;border-radius:12px;padding:13px 17px;margin-bottom:9px;`;
+    d.innerHTML=`<div style="font-size:15px;color:#ccc;">${s.label}</div><div style="font-size:17px;font-weight:bold;color:${s.color};">${s.value}</div>`;
+    sl.appendChild(d);
+  });
+}
+
+function generateExport(){
+  const cw=weightLog[weightLog.length-1]?.weight||INITIAL_WEIGHT;
+  const lost=(INITIAL_WEIGHT-cw).toFixed(1);const rem=(cw-GOAL_WEIGHT).toFixed(1);
+  const pct=Math.min(100,Math.max(0,((INITIAL_WEIGHT-cw)/(INITIAL_WEIGHT-GOAL_WEIGHT))*100)).toFixed(1);
+  const completedDates=Object.keys(completedWorkouts).filter(k=>completedWorkouts[k]).sort();
+  const sleepEntries=Object.entries(sleepLog).sort((a,b)=>a[0].localeCompare(b[0]));
+  const avgSleep=sleepEntries.length>0?(sleepEntries.reduce((s,[,h])=>s+h,0)/sleepEntries.length).toFixed(1):"N/A";
+
+  let L=[];
+  L.push("=== MY WELLNESS DATA FOR CLAUDE ===");
+  L.push("Date: "+new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
+  L.push("May Program: Week "+selectedWeek+" of 5 — "+MAY_PROGRAM[selectedWeek].label);
+  L.push("");
+  L.push("PROFILE: Age 56, Height 5ft9, Goal 208→185 lbs, High blood pressure (prescription ready)");
+  L.push("");
+  L.push("WEIGHT:");
+  L.push("  Starting: 208 lbs | Current: "+cw+" lbs | Lost: "+lost+" lbs | Remaining: "+rem+" lbs | "+pct+"% done");
+  L.push("  BMI: "+calcBMI(cw)+" → Goal: "+calcBMI(GOAL_WEIGHT));
+  if(weightLog.length>1){L.push("  Recent:");[...weightLog].slice(-10).forEach(e=>L.push("    "+e.date+": "+e.weight+" lbs"));}
+  L.push("");
+  L.push("BLOOD PRESSURE:");
+  if(bpLog.length===0){L.push("  No readings logged.");}
+  else{bpLog.forEach(e=>{const cat=getBPCat(e.systolic,e.diastolic);L.push("  "+e.date+(e.time?" "+e.time:"")+": "+e.systolic+"/"+e.diastolic+" ("+cat.label+")"+(e.note?" — "+e.note:""));});}
+  L.push("");
+  L.push("SLEEP (target: 7h, avg: "+avgSleep+"h):");
+  if(sleepEntries.length===0){L.push("  No sleep data logged.");}
+  else{sleepEntries.slice(-14).forEach(([d,h])=>L.push("  "+d+" ("+dayNameFromDate(d)+"): "+h+"h "+(h>=SLEEP_GOAL?"✓":"⚠️ below goal")));}
+  L.push("");
+  L.push("COMPLETED WORKOUTS ("+completedDates.length+" total):");
+  completedDates.slice(-14).forEach(d=>L.push("  ✓ "+d+" ("+dayNameFromDate(d)+")"));
+  L.push("");
+  L.push("SESSION NOTES:");
+  const noteDates=Object.keys(sessionLogs).sort().slice(-14);
+  if(noteDates.length===0){L.push("  None yet.");}
+  else{noteDates.forEach(d=>L.push("  "+d+" ("+dayNameFromDate(d)+"): "+sessionLogs[d]));}
+  const exKeys=Object.keys(exerciseNotes).sort().slice(-30);
+  if(exKeys.length>0){L.push("");L.push("EXERCISE NOTES:");exKeys.forEach(k=>L.push("  ["+k+"]: "+exerciseNotes[k]));}
+  L.push("");
+  L.push("Please review and give me coaching feedback!");
+  L.push("=== END ===");
+
+  document.getElementById("exportText").value=L.join("\n");
+  document.getElementById("exportOutput").style.display="block";
+  document.getElementById("copiedMsg").style.display="none";
+  setTimeout(()=>document.getElementById("exportOutput").scrollIntoView({behavior:"smooth"}),100);
+}
+
+function copyExport(){
+  const ta=document.getElementById("exportText");ta.select();
+  try{document.execCommand("copy");document.getElementById("copiedMsg").style.display="block";}
+  catch(e){navigator.clipboard.writeText(ta.value).then(()=>document.getElementById("copiedMsg").style.display="block").catch(()=>alert("Tap and hold the text, then Select All and Copy"));}
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(id){
+  ["dashboard","workouts","pool","weight","bp","sleep","nutrition","stats"].forEach(t=>{
+    document.getElementById("page-"+t).classList.toggle("active",t===id);
+    const btn=document.getElementById("tab-"+t);
+    if(btn){if(t===id){btn.style.background="#1a0a00";btn.style.borderBottom="3px solid #e63946";btn.style.color="#f0ece4";}
+    else{btn.style.background="transparent";btn.style.borderBottom="3px solid transparent";btn.style.color="#666";}}
+  });
+  if(id==="workouts"){renderWeekSelector();renderDatePicker();renderWorkoutSection();}
+  if(id==="pool")renderPool();
+  if(id==="weight")renderWeight();
+  if(id==="bp")renderBP();
+  if(id==="sleep")renderSleep();
+  if(id==="nutrition")renderNutrition();
+  if(id==="stats")renderStats();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById("weightInput").addEventListener("keydown",e=>{if(e.key==="Enter")logWeight();});
+document.getElementById("sleepHours").addEventListener("keydown",e=>{if(e.key==="Enter")logSleep();});
+
+updateHeader();
+renderDashboard();
+initNutrition();
+renderNutrition();
+setTimer(60);
+</script>
+</body>
+</html>
